@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>355</width>
+    <height>275</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Автокалибровка N4-25</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../irspy/qt/resources/icons.qrc">
+    <normaloff>:/icons/icons/robot_1.png</normaloff>:/icons/icons/robot_1.png</iconset>
+  </property>
+  <property name="animated">
+   <bool>true</bool>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout_2">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <widget class="QWidget" name="horizontalLayoutWidget">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>IP</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="ip_edit">
+            <property name="text">
+             <string>192.168.0.91</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="connect_button">
+            <property name="text">
+             <string>Подключиться</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Команда</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="cmd_edit"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="send_cmd_button">
+            <property name="text">
+             <string>Отправить</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="idn_button">
+            <property name="text">
+             <string>*IDN?</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="error_buttons">
+            <property name="text">
+             <string>Ошибки</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="gridLayoutWidget">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QTextEdit" name="log_text_edit"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>355</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>Справка</string>
+    </property>
+    <addaction name="open_about_action"/>
+   </widget>
+   <addaction name="menu"/>
+  </widget>
+  <action name="open_about_action">
+   <property name="text">
+    <string>О программе...</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="../../irspy/qt/resources/icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>
