@@ -1,0 +1,1302 @@
+*CAL? Runs all the calibration routines. 
+*CLS Clears the status or event. 
+*ESE? Sets the value for the ESER register. 
+*ESE Sets the value for the ESER register. 
+*ESR? Queries the SESR register value. 
+*IDN? Queries the analyzer ID. 
+*OPC? Synchronizes commands. 
+*OPC Synchronizes commands. 
+*OPT? Queries the options incorporated in the analyzer. 
+*RST Restores the factory initialization settings. 
+*SRE? Sets the value for the SRER register. 
+*SRE Sets the value for the SRER register. 
+*STB? Queries the Status Byte Register value. 
+*TRG Generates a trigger event. 
+*TST? Runs a self test. 
+*WAI Waits until the run of another command is completed. 
+:ABOR Resets and restarts sweep, trigger, and measurement. 
+:CALC1:DLIN1? Sets the vertical position of the horizontal line. 
+:CALC1:DLIN2? Sets the vertical position of the horizontal line. 
+:CALC2:DLIN1? Sets the vertical position of the horizontal line. 
+:CALC2:DLIN2? Sets the vertical position of the horizontal line. 
+:CALC3:DLIN1? Sets the vertical position of the horizontal line. 
+:CALC3:DLIN2? Sets the vertical position of the horizontal line. 
+:CALC4:DLIN1? Sets the vertical position of the horizontal line. 
+:CALC4:DLIN2? Sets the vertical position of the horizontal line. 
+:CALC1:DLIN1 Sets the vertical position of the horizontal line. 
+:CALC1:DLIN2 Sets the vertical position of the horizontal line. 
+:CALC2:DLIN1 Sets the vertical position of the horizontal line. 
+:CALC2:DLIN2 Sets the vertical position of the horizontal line. 
+:CALC3:DLIN1 Sets the vertical position of the horizontal line. 
+:CALC3:DLIN2 Sets the vertical position of the horizontal line. 
+:CALC4:DLIN1 Sets the vertical position of the horizontal line. 
+:CALC4:DLIN2 Sets the vertical position of the horizontal line. 
+:CALC1:DLIN1:STAT? Determines whether to show the horizontal line. 
+:CALC1:DLIN2:STAT? Determines whether to show the horizontal line. 
+:CALC2:DLIN1:STAT? Determines whether to show the horizontal line. 
+:CALC2:DLIN2:STAT? Determines whether to show the horizontal line. 
+:CALC3:DLIN1:STAT? Determines whether to show the horizontal line. 
+:CALC3:DLIN2:STAT? Determines whether to show the horizontal line. 
+:CALC4:DLIN1:STAT? Determines whether to show the horizontal line. 
+:CALC4:DLIN2:STAT? Determines whether to show the horizontal line. 
+:CALC1:DLIN1:STAT Determines whether to show the horizontal line. 
+:CALC1:DLIN2:STAT Determines whether to show the horizontal line. 
+:CALC2:DLIN1:STAT Determines whether to show the horizontal line. 
+:CALC2:DLIN2:STAT Determines whether to show the horizontal line. 
+:CALC3:DLIN1:STAT Determines whether to show the horizontal line. 
+:CALC3:DLIN2:STAT Determines whether to show the horizontal line. 
+:CALC4:DLIN1:STAT Determines whether to show the horizontal line. 
+:CALC4:DLIN2:STAT Determines whether to show the horizontal line. 
+:CALC1:MARK:AOFF Turns off all the markers. 
+:CALC2:MARK:AOFF Turns off all the markers. 
+:CALC3:MARK:AOFF Turns off all the markers. 
+:CALC4:MARK:AOFF Turns off all the markers. 
+:CALC1:MARK1:MAX Places the marker at the maximum point on the trace. 
+:CALC1:MARK2:MAX Places the marker at the maximum point on the trace. 
+:CALC2:MARK1:MAX Places the marker at the maximum point on the trace. 
+:CALC2:MARK2:MAX Places the marker at the maximum point on the trace. 
+:CALC3:MARK1:MAX Places the marker at the maximum point on the trace. 
+:CALC3:MARK2:MAX Places the marker at the maximum point on the trace. 
+:CALC4:MARK1:MAX Places the marker at the maximum point on the trace. 
+:CALC4:MARK2:MAX Places the marker at the maximum point on the trace. 
+:CALC1:MARK1:MODE? Selects the marker mode (position or delta). 
+:CALC1:MARK2:MODE? Selects the marker mode (position or delta). 
+:CALC2:MARK1:MODE? Selects the marker mode (position or delta). 
+:CALC2:MARK2:MODE? Selects the marker mode (position or delta). 
+:CALC3:MARK1:MODE? Selects the marker mode (position or delta). 
+:CALC3:MARK2:MODE? Selects the marker mode (position or delta). 
+:CALC4:MARK1:MODE? Selects the marker mode (position or delta). 
+:CALC4:MARK2:MODE? Selects the marker mode (position or delta). 
+:CALC1:MARK1:MODE Selects the marker mode (position or delta). 
+:CALC1:MARK2:MODE Selects the marker mode (position or delta). 
+:CALC2:MARK1:MODE Selects the marker mode (position or delta). 
+:CALC2:MARK2:MODE Selects the marker mode (position or delta). 
+:CALC3:MARK1:MODE Selects the marker mode (position or delta). 
+:CALC3:MARK2:MODE Selects the marker mode (position or delta). 
+:CALC4:MARK1:MODE Selects the marker mode (position or delta). 
+:CALC4:MARK2:MODE Selects the marker mode (position or delta). 
+:CALC1:MARK1:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC1:MARK2:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC2:MARK1:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC2:MARK2:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC3:MARK1:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC3:MARK2:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC4:MARK1:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC4:MARK2:PEAK:HIGH Moves the marker to the next higher peak. 
+:CALC1:MARK1:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC1:MARK2:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC2:MARK1:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC2:MARK2:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC3:MARK1:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC3:MARK2:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC4:MARK1:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC4:MARK2:PEAK:LEFT Moves the marker to the peak on the left. 
+:CALC1:MARK1:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC1:MARK2:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC2:MARK1:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC2:MARK2:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC3:MARK1:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC3:MARK2:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC4:MARK1:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC4:MARK2:PEAK:LOW Moves the marker to the next lower peak. 
+:CALC1:MARK1:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC1:MARK2:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC2:MARK1:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC2:MARK2:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC3:MARK1:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC3:MARK2:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC4:MARK1:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC4:MARK2:PEAK:RIGH Moves the marker to the peak on the right. 
+:CALC1:MARK1:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC1:MARK2:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC2:MARK1:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC2:MARK2:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC3:MARK1:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC3:MARK2:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC4:MARK1:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC4:MARK2:PTHR? Sets the minimum jump of the marker on the horizontal axis. 
+:CALC1:MARK1:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC1:MARK2:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC2:MARK1:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC2:MARK2:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC3:MARK1:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC3:MARK2:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC4:MARK1:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC4:MARK2:PTHR Sets the minimum jump of the marker on the horizontal axis. 
+:CALC1:MARK1:RCUR Displays the reference cursor at the marker position. 
+:CALC1:MARK2:RCUR Displays the reference cursor at the marker position. 
+:CALC2:MARK1:RCUR Displays the reference cursor at the marker position. 
+:CALC2:MARK2:RCUR Displays the reference cursor at the marker position. 
+:CALC3:MARK1:RCUR Displays the reference cursor at the marker position. 
+:CALC3:MARK2:RCUR Displays the reference cursor at the marker position. 
+:CALC4:MARK1:RCUR Displays the reference cursor at the marker position. 
+:CALC4:MARK2:RCUR Displays the reference cursor at the marker position. 
+:CALC1:MARK1:ROFF Turn off the reference cursor. 
+:CALC1:MARK2:ROFF Turn off the reference cursor. 
+:CALC2:MARK1:ROFF Turn off the reference cursor. 
+:CALC2:MARK2:ROFF Turn off the reference cursor. 
+:CALC3:MARK1:ROFF Turn off the reference cursor. 
+:CALC3:MARK2:ROFF Turn off the reference cursor. 
+:CALC4:MARK1:ROFF Turn off the reference cursor. 
+:CALC4:MARK2:ROFF Turn off the reference cursor. 
+:CALC1:MARK1:CENT Sets the center frequency to the value at the marker position. 
+:CALC1:MARK1:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC1:MARK2:CENT Sets the center frequency to the value at the marker position. 
+:CALC1:MARK2:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC2:MARK1:CENT Sets the center frequency to the value at the marker position. 
+:CALC2:MARK1:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC2:MARK2:CENT Sets the center frequency to the value at the marker position. 
+:CALC2:MARK2:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC3:MARK1:CENT Sets the center frequency to the value at the marker position. 
+:CALC3:MARK1:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC3:MARK2:CENT Sets the center frequency to the value at the marker position. 
+:CALC3:MARK2:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC4:MARK1:CENT Sets the center frequency to the value at the marker position. 
+:CALC4:MARK1:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC4:MARK2:CENT Sets the center frequency to the value at the marker position. 
+:CALC4:MARK2:SET:CENT Sets the center frequency to the value at the marker position. 
+:CALC1:MARK1:MEAS Sets the measurement position with the marker. 
+:CALC1:MARK1:SET:MEAS Sets the measurement position with the marker. 
+:CALC1:MARK2:MEAS Sets the measurement position with the marker. 
+:CALC1:MARK2:SET:MEAS Sets the measurement position with the marker. 
+:CALC2:MARK1:MEAS Sets the measurement position with the marker. 
+:CALC2:MARK1:SET:MEAS Sets the measurement position with the marker. 
+:CALC2:MARK2:MEAS Sets the measurement position with the marker. 
+:CALC2:MARK2:SET:MEAS Sets the measurement position with the marker. 
+:CALC3:MARK1:MEAS Sets the measurement position with the marker. 
+:CALC3:MARK1:SET:MEAS Sets the measurement position with the marker. 
+:CALC3:MARK2:MEAS Sets the measurement position with the marker. 
+:CALC3:MARK2:SET:MEAS Sets the measurement position with the marker. 
+:CALC4:MARK1:MEAS Sets the measurement position with the marker. 
+:CALC4:MARK1:SET:MEAS Sets the measurement position with the marker. 
+:CALC4:MARK2:MEAS Sets the measurement position with the marker. 
+:CALC4:MARK2:SET:MEAS Sets the measurement position with the marker. 
+:CALC1:MARK1 Determines whether to show the marker. 
+:CALC1:MARK1:STAT Determines whether to show the marker. 
+:CALC1:MARK2 Determines whether to show the marker. 
+:CALC1:MARK2:STAT Determines whether to show the marker. 
+:CALC2:MARK1 Determines whether to show the marker. 
+:CALC2:MARK1:STAT Determines whether to show the marker. 
+:CALC2:MARK2 Determines whether to show the marker. 
+:CALC2:MARK2:STAT Determines whether to show the marker. 
+:CALC3:MARK1 Determines whether to show the marker. 
+:CALC3:MARK1:STAT Determines whether to show the marker. 
+:CALC3:MARK2 Determines whether to show the marker. 
+:CALC3:MARK2:STAT Determines whether to show the marker. 
+:CALC4:MARK1 Determines whether to show the marker. 
+:CALC4:MARK1:STAT Determines whether to show the marker. 
+:CALC4:MARK2 Determines whether to show the marker. 
+:CALC4:MARK2:STAT Determines whether to show the marker. 
+:CALC1:MARK1:TOGG Replaces the delta marker with the main marker. 
+:CALC1:MARK2:TOGG Replaces the delta marker with the main marker. 
+:CALC2:MARK1:TOGG Replaces the delta marker with the main marker. 
+:CALC2:MARK2:TOGG Replaces the delta marker with the main marker. 
+:CALC3:MARK1:TOGG Replaces the delta marker with the main marker. 
+:CALC3:MARK2:TOGG Replaces the delta marker with the main marker. 
+:CALC4:MARK1:TOGG Replaces the delta marker with the main marker. 
+:CALC4:MARK2:TOGG Replaces the delta marker with the main marker. 
+:CALC1:MARK1:TRAC? Selects the trace to place the marker. 
+:CALC1:MARK2:TRAC? Selects the trace to place the marker. 
+:CALC2:MARK1:TRAC? Selects the trace to place the marker. 
+:CALC2:MARK2:TRAC? Selects the trace to place the marker. 
+:CALC3:MARK1:TRAC? Selects the trace to place the marker. 
+:CALC3:MARK2:TRAC? Selects the trace to place the marker. 
+:CALC4:MARK1:TRAC? Selects the trace to place the marker. 
+:CALC4:MARK2:TRAC? Selects the trace to place the marker. 
+:CALC1:MARK1:TRAC Selects the trace to place the marker. 
+:CALC1:MARK2:TRAC Selects the trace to place the marker. 
+:CALC2:MARK1:TRAC Selects the trace to place the marker. 
+:CALC2:MARK2:TRAC Selects the trace to place the marker. 
+:CALC3:MARK1:TRAC Selects the trace to place the marker. 
+:CALC3:MARK2:TRAC Selects the trace to place the marker. 
+:CALC4:MARK1:TRAC Selects the trace to place the marker. 
+:CALC4:MARK2:TRAC Selects the trace to place the marker. 
+:CALC1:MARK1:X? Positions the marker on the horizontal axis. 
+:CALC1:MARK2:X? Positions the marker on the horizontal axis. 
+:CALC2:MARK1:X? Positions the marker on the horizontal axis. 
+:CALC2:MARK2:X? Positions the marker on the horizontal axis. 
+:CALC3:MARK1:X? Positions the marker on the horizontal axis. 
+:CALC3:MARK2:X? Positions the marker on the horizontal axis. 
+:CALC4:MARK1:X? Positions the marker on the horizontal axis. 
+:CALC4:MARK2:X? Positions the marker on the horizontal axis. 
+:CALC1:MARK1:X Positions the marker on the horizontal axis. 
+:CALC1:MARK2:X Positions the marker on the horizontal axis. 
+:CALC2:MARK1:X Positions the marker on the horizontal axis. 
+:CALC2:MARK2:X Positions the marker on the horizontal axis. 
+:CALC3:MARK1:X Positions the marker on the horizontal axis. 
+:CALC3:MARK2:X Positions the marker on the horizontal axis. 
+:CALC4:MARK1:X Positions the marker on the horizontal axis. 
+:CALC4:MARK2:X Positions the marker on the horizontal axis. 
+:CALC1:MARK1:Y? Positions the marker on the vertical axis. 
+:CALC1:MARK2:Y? Positions the marker on the vertical axis. 
+:CALC2:MARK1:Y? Positions the marker on the vertical axis. 
+:CALC2:MARK2:Y? Positions the marker on the vertical axis. 
+:CALC3:MARK1:Y? Positions the marker on the vertical axis. 
+:CALC3:MARK2:Y? Positions the marker on the vertical axis. 
+:CALC4:MARK1:Y? Positions the marker on the vertical axis. 
+:CALC4:MARK2:Y? Positions the marker on the vertical axis. 
+:CALC1:MARK1:Y Positions the marker on the vertical axis. 
+:CALC1:MARK2:Y Positions the marker on the vertical axis. 
+:CALC2:MARK1:Y Positions the marker on the vertical axis. 
+:CALC2:MARK2:Y Positions the marker on the vertical axis. 
+:CALC3:MARK1:Y Positions the marker on the vertical axis. 
+:CALC3:MARK2:Y Positions the marker on the vertical axis. 
+:CALC4:MARK1:Y Positions the marker on the vertical axis. 
+:CALC4:MARK2:Y Positions the marker on the vertical axis. 
+:CALC1:VLIN1? Sets the horizontal position of the vertical line. 
+:CALC1:VLIN2? Sets the horizontal position of the vertical line. 
+:CALC2:VLIN1? Sets the horizontal position of the vertical line. 
+:CALC2:VLIN2? Sets the horizontal position of the vertical line. 
+:CALC3:VLIN1? Sets the horizontal position of the vertical line. 
+:CALC3:VLIN2? Sets the horizontal position of the vertical line. 
+:CALC4:VLIN1? Sets the horizontal position of the vertical line. 
+:CALC4:VLIN2? Sets the horizontal position of the vertical line. 
+:CALC1:VLIN1 Sets the horizontal position of the vertical line. 
+:CALC1:VLIN2 Sets the horizontal position of the vertical line. 
+:CALC2:VLIN1 Sets the horizontal position of the vertical line. 
+:CALC2:VLIN2 Sets the horizontal position of the vertical line. 
+:CALC3:VLIN1 Sets the horizontal position of the vertical line. 
+:CALC3:VLIN2 Sets the horizontal position of the vertical line. 
+:CALC4:VLIN1 Sets the horizontal position of the vertical line. 
+:CALC4:VLIN2 Sets the horizontal position of the vertical line. 
+:CALC1:VLIN1:STAT? Determines whether to show the vertical line. 
+:CALC1:VLIN2:STAT? Determines whether to show the vertical line. 
+:CALC2:VLIN1:STAT? Determines whether to show the vertical line. 
+:CALC2:VLIN2:STAT? Determines whether to show the vertical line. 
+:CALC3:VLIN1:STAT? Determines whether to show the vertical line. 
+:CALC3:VLIN2:STAT? Determines whether to show the vertical line. 
+:CALC4:VLIN1:STAT? Determines whether to show the vertical line. 
+:CALC4:VLIN2:STAT? Determines whether to show the vertical line. 
+:CALC1:VLIN1:STAT Determines whether to show the vertical line. 
+:CALC1:VLIN2:STAT Determines whether to show the vertical line. 
+:CALC2:VLIN1:STAT Determines whether to show the vertical line. 
+:CALC2:VLIN2:STAT Determines whether to show the vertical line. 
+:CALC3:VLIN1:STAT Determines whether to show the vertical line. 
+:CALC3:VLIN2:STAT Determines whether to show the vertical line. 
+:CALC4:VLIN1:STAT Determines whether to show the vertical line. 
+:CALC4:VLIN2:STAT Determines whether to show the vertical line. 
+:CAL? Runs all the calibration routines. 
+:CAL:ALL? Runs all the calibration routines. 
+:CAL Runs all the calibration routines. 
+:CAL:ALL Runs all the calibration routines. 
+:CAL:AUTO? Determines whether to run the RF gain calibration automatically. 
+:CAL:AUTO Determines whether to run the RF gain calibration automatically. 
+:CAL:DATA:DEF Restores the calibrated data to the factory defaults. 
+:CAL:OFFS:BAS? (Option 05 only) Runs the baseband DC offset calibration. 
+:CAL:OFFS:BAS (Option 05 only) Runs the baseband DC offset calibration. 
+:CAL:OFFS:CENT? Runs the center offset calibration. 
+:CAL:OFFS:CENT Runs the center offset calibration. 
+:CAL:RF? Runs the RF gain calibration. 
+:CAL:RF Runs the RF gain calibration. 
+:CONF:ADEM:AM Sets up the analyzer to the AM signal analysis default settings. 
+:CONF:ADEM:FM Sets up the analyzer to the FM signal analysis default settings. 
+:CONF:ADEM:PM Sets up the analyzer to the PM signal analysis default settings. 
+:CONF:ADEM:PSP Sets the analyzer to the pulse spectrum measurement default settings. 
+:CONF:CCDF Sets the up analyzer to the CCDF measurement default settings. 
+:CONF:OVI Turns off measurement to obtain display data in the overview 
+:CONF:PULS Sets the analyzer to the pulse characteristics measurement default settings. 
+:CONF:SPEC Sets up the analyzer to the spectrum measurement default settings. 
+:CONF:SPEC:ACP Sets up the analyzer to the ACPR measurement default settings. 
+:CONF:SPEC:CFR Sets up the analyzer to the carrier frequency measurement default settings. 
+:CONF:SPEC:CHP Sets up the analyzer to the channel power measurement default settings. 
+:CONF:SPEC:CNR Sets up the analyzer to the C/N measurement default settings. 
+:CONF:SPEC:EBW Sets up the analyzer to the emission bandwidth measurement default settings. 
+:CONF:SPEC:OBW Sets up the analyzer to the OBW measurement default settings. 
+:CONF:SPEC:SPUR Sets up the analyzer to the spurious signal measurement default settings. 
+:CONF:TFR:RTIM Sets up the analyzer to the realltime spectrum measurement default settings. 
+:CONF:TFR:SGR Sets up the analyzer to the spectrogram measurement default settings. 
+:CONF:TRAN:FVT Sets up the analyzer to the frequency vs. time measurement default settings. 
+:CONF:TRAN:IQVT Sets up the analyzer to the IQ level vs. time measurement default settings. 
+:CONF:TRAN:PVT Sets up the analyzer to the power vs. time measurement default settings. 
+:DISP:CCDF:LINE:GAUS? Determines whether to show the Gaussian line. 
+:DISP:CCDF:LINE:GAUS:STAT? Determines whether to show the Gaussian line. 
+:DISP:CCDF:LINE:GAUS Determines whether to show the Gaussian line. 
+:DISP:CCDF:LINE:GAUS:STAT Determines whether to show the Gaussian line. 
+:DISP:CCDF:LINE:REF? Determines whether to show the reference line. 
+:DISP:CCDF:LINE:REF:STAT? Determines whether to show the reference line. 
+:DISP:CCDF:LINE:REF Determines whether to show the reference line. 
+:DISP:CCDF:LINE:REF:STAT Determines whether to show the reference line. 
+:DISP:CCDF:LINE:REF:STOR Stores the current CCDF trace as the reference line. 
+:DISP:CCDF:X:AUTO? Determines whether to set the horizontal scale automatically. 
+:DISP:CCDF:X:SCAL:AUTO? Determines whether to set the horizontal scale automatically. 
+:DISP:CCDF:X:AUTO Determines whether to set the horizontal scale automatically. 
+:DISP:CCDF:X:SCAL:AUTO Determines whether to set the horizontal scale automatically. 
+:DISP:CCDF:X:MAX? Sets the maximum horizontal value (right end). 
+:DISP:CCDF:X:SCAL:MAX? Sets the maximum horizontal value (right end). 
+:DISP:CCDF:X:MAX Sets the maximum horizontal value (right end). 
+:DISP:CCDF:X:SCAL:MAX Sets the maximum horizontal value (right end). 
+:DISP:CCDF:X:OFFS? Sets the minimum horizontal value (left end). 
+:DISP:CCDF:X:SCAL:OFFS? Sets the minimum horizontal value (left end). 
+:DISP:CCDF:X:OFFS Sets the minimum horizontal value (left end). 
+:DISP:CCDF:X:SCAL:OFFS Sets the minimum horizontal value (left end). 
+:DISP:CCDF:Y:FIT Runs autooscale. 
+:DISP:CCDF:Y:SCAL:FIT Runs autooscale. 
+:DISP:CCDF:Y:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:CCDF:Y:SCAL:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:CCDF:Y:MAX? Sets the maximum vertical value (top end). 
+:DISP:CCDF:Y:SCAL:MAX? Sets the maximum vertical value (top end). 
+:DISP:CCDF:Y:MAX Sets the maximum vertical value (top end). 
+:DISP:CCDF:Y:SCAL:MAX Sets the maximum vertical value (top end). 
+:DISP:CCDF:Y:MIN? Sets the minimum vertical value (bottom end). 
+:DISP:CCDF:Y:SCAL:MIN? Sets the minimum vertical value (bottom end). 
+:DISP:CCDF:Y:MIN Sets the minimum vertical value (bottom end). 
+:DISP:CCDF:Y:SCAL:MIN Sets the minimum vertical value (bottom end). 
+:DISP:OVI:FORM? Selects the overview display format. 
+:DISP:OVI:FORM Selects the overview display format. 
+:DISP:OVI:SGR:COL:OFFS? Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:OVI:SGR:COL:SCAL:OFFS? Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:OVI:SGR:COL:OFFS Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:OVI:SGR:COL:SCAL:OFFS Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:OVI:SGR:COL:RANG? Sets the colorraxis fulllscale of the spectrogram. 
+:DISP:OVI:SGR:COL:SCAL:RANG? Sets the colorraxis fulllscale of the spectrogram. 
+:DISP:OVI:SGR:COL:RANG Sets the colorraxis fulllscale of the spectrogram. 
+:DISP:OVI:SGR:COL:SCAL:RANG Sets the colorraxis fulllscale of the spectrogram. 
+:DISP:OVI:SGR:X:OFFS? Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:OVI:SGR:X:SCAL:OFFS? Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:OVI:SGR:X:OFFS Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:OVI:SGR:X:SCAL:OFFS Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:OVI:SGR:X:SPAN? Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:OVI:SGR:X:SCAL:SPAN? Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:OVI:SGR:X:SPAN Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:OVI:SGR:X:SCAL:SPAN Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:OVI:SGR:Y:OFFS? Sets the minimum vertical value of the spectrogram (bottom end). 
+:DISP:OVI:SGR:Y:SCAL:OFFS? Sets the minimum vertical value of the spectrogram (bottom end). 
+:DISP:OVI:SGR:Y:OFFS Sets the minimum vertical value of the spectrogram (bottom end). 
+:DISP:OVI:SGR:Y:SCAL:OFFS Sets the minimum vertical value of the spectrogram (bottom end). 
+:DISP:OVI:SGR:Y:PLIN? Sets the vertical scale of the spectrogram. 
+:DISP:OVI:SGR:Y:SCAL:PLIN? Sets the vertical scale of the spectrogram. 
+:DISP:OVI:SGR:Y:PLIN Sets the vertical scale of the spectrogram. 
+:DISP:OVI:SGR:Y:SCAL:PLIN Sets the vertical scale of the spectrogram. 
+:DISP:OVI:WAV:X:OFFS? Sets the minimum horizontal value (left edge) in the time domain display. 
+:DISP:OVI:WAV:X:SCAL:OFFS? Sets the minimum horizontal value (left edge) in the time domain display. 
+:DISP:OVI:WAV:X:OFFS Sets the minimum horizontal value (left edge) in the time domain display. 
+:DISP:OVI:WAV:X:SCAL:OFFS Sets the minimum horizontal value (left edge) in the time domain display. 
+:DISP:OVI:WAV:X:PDIV? Sets the horizontal scale in the time domain display. 
+:DISP:OVI:WAV:X:SCAL:PDIV? Sets the horizontal scale in the time domain display. 
+:DISP:OVI:WAV:X:PDIV Sets the horizontal scale in the time domain display. 
+:DISP:OVI:WAV:X:SCAL:PDIV Sets the horizontal scale in the time domain display. 
+:DISP:OVI:WAV:Y:FIT Runs autooscale on the time domain display. 
+:DISP:OVI:WAV:Y:SCAL:FIT Runs autooscale on the time domain display. 
+:DISP:OVI:WAV:Y:FULL Sets the time domain display's vertical axis to the default fulllscale. 
+:DISP:OVI:WAV:Y:SCAL:FULL Sets the time domain display's vertical axis to the default fulllscale. 
+:DISP:OVI:WAV:Y:OFFS? Sets the minimum vertical value in the time domain display. 
+:DISP:OVI:WAV:Y:SCAL:OFFS? Sets the minimum vertical value in the time domain display. 
+:DISP:OVI:WAV:Y:OFFS Sets the minimum vertical value in the time domain display. 
+:DISP:OVI:WAV:Y:SCAL:OFFS Sets the minimum vertical value in the time domain display. 
+:DISP:OVI:WAV:Y:PDIV? Sets the vertical scale in the time domain display. 
+:DISP:OVI:WAV:Y:SCAL:PDIV? Sets the vertical scale in the time domain display. 
+:DISP:OVI:WAV:Y:PDIV Sets the vertical scale in the time domain display. 
+:DISP:OVI:WAV:Y:SCAL:PDIV Sets the vertical scale in the time domain display. 
+:DISP:OVI:ZOOM:COL:OFFS? Sets the minimum colorraxis value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:SCAL:OFFS? Sets the minimum colorraxis value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:OFFS Sets the minimum colorraxis value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:SCAL:OFFS Sets the minimum colorraxis value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:RANG? Sets the colorraxis fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:SCAL:RANG? Sets the colorraxis fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:RANG Sets the colorraxis fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:COL:SCAL:RANG Sets the colorraxis fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:OFFS? Sets the minimum horizontal value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SCAL:OFFS? Sets the minimum horizontal value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:OFFS Sets the minimum horizontal value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SCAL:OFFS Sets the minimum horizontal value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SPAN? Sets the horizontal fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SCAL:SPAN? Sets the horizontal fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SPAN Sets the horizontal fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:X:SCAL:SPAN Sets the horizontal fulllscale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:OFFS? Sets the minimum vertical value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:SCAL:OFFS? Sets the minimum vertical value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:OFFS Sets the minimum vertical value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:SCAL:OFFS Sets the minimum vertical value of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:PLIN? Sets the vertical scale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:SCAL:PLIN? Sets the vertical scale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:PLIN Sets the vertical scale of the spectrogram with zoom. 
+:DISP:OVI:ZOOM:Y:SCAL:PLIN Sets the vertical scale of the spectrogram with zoom. 
+:DISP:PULS:MVI:RES:CHP? Determines whether to show channel power measurement results. 
+:DISP:PULS:MVI:RES:CHP Determines whether to show channel power measurement results. 
+:DISP:PULS:MVI:RES:DCYC? Determines whether to show duty cycle measurement results. 
+:DISP:PULS:MVI:RES:DCYC Determines whether to show duty cycle measurement results. 
+:DISP:PULS:MVI:RES:EBW? Determines whether to show EBW measurement results. 
+:DISP:PULS:MVI:RES:EBW Determines whether to show EBW measurement results. 
+:DISP:PULS:MVI:RES:FREQ? Determines whether to show frequency deviation measurement results. 
+:DISP:PULS:MVI:RES:FREQ Determines whether to show frequency deviation measurement results. 
+:DISP:PULS:MVI:RES:OBW? Determines whether to show OBW measurement results. 
+:DISP:PULS:MVI:RES:OBW Determines whether to show OBW measurement results. 
+:DISP:PULS:MVI:RES:OOR? Determines whether to show on/offfratio measurement results. 
+:DISP:PULS:MVI:RES:OOR Determines whether to show on/offfratio measurement results. 
+:DISP:PULS:MVI:RES:PER? Determines whether to show repetition interval measurement results. 
+:DISP:PULS:MVI:RES:PER Determines whether to show repetition interval measurement results. 
+:DISP:PULS:MVI:RES:PHAS? Determines whether to show pulseepulse phase measurement results. 
+:DISP:PULS:MVI:RES:PHAS Determines whether to show pulseepulse phase measurement results. 
+:DISP:PULS:MVI:RES:PPOW? Determines whether to show peak power measurement results. 
+:DISP:PULS:MVI:RES:PPOW Determines whether to show peak power measurement results. 
+:DISP:PULS:MVI:RES:RIPP? Determines whether to show pulse ripple measurement results. 
+:DISP:PULS:MVI:RES:RIPP Determines whether to show pulse ripple measurement results. 
+:DISP:PULS:MVI:RES:WIDT? Determines whether to show pulse width measurement results. 
+:DISP:PULS:MVI:RES:WIDT Determines whether to show pulse width measurement results. 
+:DISP:PULS:SVI:FORM? Selects the display format of the subview. 
+:DISP:PULS:SVI:FORM Selects the display format of the subview. 
+:DISP:PULS:SVI:GUID? Determines whether to show the guidelines in the subview. 
+:DISP:PULS:SVI:GUID Determines whether to show the guidelines in the subview. 
+:DISP:PULS:SVI:RANG? Selects how to set the horizontal scale in the subview. 
+:DISP:PULS:SVI:RANG Selects how to set the horizontal scale in the subview. 
+:DISP:PULS:SVI:RES? Selects how to show the result graph in the subview. 
+:DISP:PULS:SVI:RES Selects how to show the result graph in the subview. 
+:DISP:PULS:SVI:SEL? Selects a pulse to measure. 
+:DISP:PULS:SVI:SEL Selects a pulse to measure. 
+:DISP:PULS:SPEC:X:OFFS? Sets the minimum horizontal value (left edge). 
+:DISP:PULS:SPEC:X:SCAL:OFFS? Sets the minimum horizontal value (left edge). 
+:DISP:PULS:SPEC:X:OFFS Sets the minimum horizontal value (left edge). 
+:DISP:PULS:SPEC:X:SCAL:OFFS Sets the minimum horizontal value (left edge). 
+:DISP:PULS:SPEC:X:PDIV? Sets the horizontal scale (per division). 
+:DISP:PULS:SPEC:X:SCAL:PDIV? Sets the horizontal scale (per division). 
+:DISP:PULS:SPEC:X:PDIV Sets the horizontal scale (per division). 
+:DISP:PULS:SPEC:X:SCAL:PDIV Sets the horizontal scale (per division). 
+:DISP:PULS:SPEC:Y:FIT Runs the autooscale. 
+:DISP:PULS:SPEC:Y:SCAL:FIT Runs the autooscale. 
+:DISP:PULS:SPEC:Y:FULL Sets the vertical axis to the default fulllscale value. 
+:DISP:PULS:SPEC:Y:SCAL:FULL Sets the vertical axis to the default fulllscale value. 
+:DISP:PULS:SPEC:Y:OFFS? Sets the minimum vertical value (bottom). 
+:DISP:PULS:SPEC:Y:SCAL:OFFS? Sets the minimum vertical value (bottom). 
+:DISP:PULS:SPEC:Y:OFFS Sets the minimum vertical value (bottom). 
+:DISP:PULS:SPEC:Y:SCAL:OFFS Sets the minimum vertical value (bottom). 
+:DISP:PULS:SPEC:Y:PDIV? Sets the vertical scale (per division). 
+:DISP:PULS:SPEC:Y:SCAL:PDIV? Sets the vertical scale (per division). 
+:DISP:PULS:SPEC:Y:PDIV Sets the vertical scale (per division). 
+:DISP:PULS:SPEC:Y:SCAL:PDIV Sets the vertical scale (per division). 
+:DISP:PULS:WAV:X:OFFS? Sets the minimum value of the horizontal axis (left edge). 
+:DISP:PULS:WAV:X:SCAL:OFFS? Sets the minimum value of the horizontal axis (left edge). 
+:DISP:PULS:WAV:X:OFFS Sets the minimum value of the horizontal axis (left edge). 
+:DISP:PULS:WAV:X:SCAL:OFFS Sets the minimum value of the horizontal axis (left edge). 
+:DISP:PULS:WAV:X:PDIV? Sets or queries the horizontal scale (per division). 
+:DISP:PULS:WAV:X:SCAL:PDIV? Sets or queries the horizontal scale (per division). 
+:DISP:PULS:WAV:X:PDIV Sets or queries the horizontal scale (per division). 
+:DISP:PULS:WAV:X:SCAL:PDIV Sets or queries the horizontal scale (per division). 
+:DISP:PULS:WAV:Y:FIT Runs the autooscale. 
+:DISP:PULS:WAV:Y:SCAL:FIT Runs the autooscale. 
+:DISP:PULS:WAV:Y:FULL Sets the vertical axis to the default fulllscale value. 
+:DISP:PULS:WAV:Y:SCAL:FULL Sets the vertical axis to the default fulllscale value. 
+:DISP:PULS:WAV:Y:OFFS? Sets the minimum value (bottom) of the vertical axis. 
+:DISP:PULS:WAV:Y:SCAL:OFFS? Sets the minimum value (bottom) of the vertical axis. 
+:DISP:PULS:WAV:Y:OFFS Sets the minimum value (bottom) of the vertical axis. 
+:DISP:PULS:WAV:Y:SCAL:OFFS Sets the minimum value (bottom) of the vertical axis. 
+:DISP:PULS:WAV:Y:PDIV? Sets the vertical scale (per division). 
+:DISP:PULS:WAV:Y:SCAL:PDIV? Sets the vertical scale (per division). 
+:DISP:PULS:WAV:Y:PDIV Sets the vertical scale (per division). 
+:DISP:PULS:WAV:Y:SCAL:PDIV Sets the vertical scale (per division). 
+:DISP:SPEC:BMAR:STAT? Turns on or off the band power marker. 
+:DISP:SPEC:BMAR:STAT Turns on or off the band power marker. 
+:DISP:SPEC:GRAT:GRID? Determines how the graticule is displayed. 
+:DISP:SPEC:GRAT:GRID Determines how the graticule is displayed. 
+:DISP:SPEC:MLIN:AMPL:INT? Sets the interval of the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL:INT Sets the interval of the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL:OFFS? Sets the offset of the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL:OFFS Sets the offset of the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL? Determines whether to show the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL:STAT? Determines whether to show the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL Determines whether to show the amplitude multi display lines. 
+:DISP:SPEC:MLIN:AMPL:STAT Determines whether to show the amplitude multi display lines. 
+:DISP:SPEC:MLIN:ANN? Determines whether to show the readout of the multi display lines. 
+:DISP:SPEC:MLIN:ANN:STAT? Determines whether to show the readout of the multi display lines. 
+:DISP:SPEC:MLIN:ANN Determines whether to show the readout of the multi display lines. 
+:DISP:SPEC:MLIN:ANN:STAT Determines whether to show the readout of the multi display lines. 
+:DISP:SPEC:MLIN:FREQ:INT? Sets the interval of the frequency multi display lines. 
+:DISP:SPEC:MLIN:FREQ:INT Sets the interval of the frequency multi display lines. 
+:DISP:SPEC:MLIN:FREQ:OFFS? Sets the offset of the frequency multi display line. 
+:DISP:SPEC:MLIN:FREQ:OFFS Sets the offset of the frequency multi display line. 
+:DISP:SPEC:MLIN:FREQ? Determines whether to show the frequency multi display lines. 
+:DISP:SPEC:MLIN:FREQ:STAT? Determines whether to show the frequency multi display lines. 
+:DISP:SPEC:MLIN:FREQ Determines whether to show the frequency multi display lines. 
+:DISP:SPEC:MLIN:FREQ:STAT Determines whether to show the frequency multi display lines. 
+:DISP:SPEC:X:OFFS? Sets the minimum horizontal value (start frequency). 
+:DISP:SPEC:X:SCAL:OFFS? Sets the minimum horizontal value (start frequency). 
+:DISP:SPEC:X:OFFS Sets the minimum horizontal value (start frequency). 
+:DISP:SPEC:X:SCAL:OFFS Sets the minimum horizontal value (start frequency). 
+:DISP:SPEC:X:PDIV? Sets the horizontal scale (span/div). 
+:DISP:SPEC:X:SCAL:PDIV? Sets the horizontal scale (span/div). 
+:DISP:SPEC:X:PDIV Sets the horizontal scale (span/div). 
+:DISP:SPEC:X:SCAL:PDIV Sets the horizontal scale (span/div). 
+:DISP:SPEC:Y:FIT Runs autooscale. 
+:DISP:SPEC:Y:SCAL:FIT Runs autooscale. 
+:DISP:SPEC:Y:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:SPEC:Y:SCAL:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:SPEC:Y:OFFS? Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:SPEC:Y:SCAL:OFFS? Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:SPEC:Y:OFFS Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:SPEC:Y:SCAL:OFFS Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:SPEC:Y:PDIV? Sets the vertical, or amplitude, scale per division. 
+:DISP:SPEC:Y:SCAL:PDIV? Sets the vertical, or amplitude, scale per division. 
+:DISP:SPEC:Y:PDIV Sets the vertical, or amplitude, scale per division. 
+:DISP:SPEC:Y:SCAL:PDIV Sets the vertical, or amplitude, scale per division. 
+:DISP:TFR:SGR:COL:OFFS? Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:COL:SCAL:OFFS? Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:COL:OFFS Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:COL:SCAL:OFFS Sets the minimum colorraxis value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:COL:RANG? Sets the scale of the spectrogram's color axis. 
+:DISP:TFR:SGR:COL:SCAL:RANG? Sets the scale of the spectrogram's color axis. 
+:DISP:TFR:SGR:COL:RANG Sets the scale of the spectrogram's color axis. 
+:DISP:TFR:SGR:COL:SCAL:RANG Sets the scale of the spectrogram's color axis. 
+:DISP:TFR:SGR:MLIN:ANN? Determines whether to show the readout of the multi display lines. 
+:DISP:TFR:SGR:MLIN:ANN:STAT? Determines whether to show the readout of the multi display lines. 
+:DISP:TFR:SGR:MLIN:ANN Determines whether to show the readout of the multi display lines. 
+:DISP:TFR:SGR:MLIN:ANN:STAT Determines whether to show the readout of the multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:INT? Sets the interval of the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:INT Sets the interval of the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:OFFS? Sets the offset of the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:OFFS Sets the offset of the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ? Determines whether to show the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:STAT? Determines whether to show the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ Determines whether to show the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:FREQ:STAT Determines whether to show the frequency multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:INT? Sets the interval of the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:INT Sets the interval of the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:OFFS? Sets the offset of the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:OFFS Sets the offset of the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME? Determines whether to show the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:STAT? Determines whether to show the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME Determines whether to show the time multi display lines. 
+:DISP:TFR:SGR:MLIN:TIME:STAT Determines whether to show the time multi display lines. 
+:DISP:TFR:SGR:X:OFFS? Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:TFR:SGR:X:SCAL:OFFS? Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:TFR:SGR:X:OFFS Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:TFR:SGR:X:SCAL:OFFS Sets the minimum horizontal value (left end) of the spectrogram. 
+:DISP:TFR:SGR:X:SPAN? Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:TFR:SGR:X:SCAL:SPAN? Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:TFR:SGR:X:SPAN Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:TFR:SGR:X:SCAL:SPAN Sets the horizontal fulllscale (span) of the spectrogram. 
+:DISP:TFR:SGR:Y:OFFS? Sets the minimum vertical value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:Y:SCAL:OFFS? Sets the minimum vertical value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:Y:OFFS Sets the minimum vertical value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:Y:SCAL:OFFS Sets the minimum vertical value (bottom end) of the spectrogram. 
+:DISP:TFR:SGR:Y:PLIN? Sets the vertical scale of the spectrogram. 
+:DISP:TFR:SGR:Y:SCAL:PLIN? Sets the vertical scale of the spectrogram. 
+:DISP:TFR:SGR:Y:PLIN Sets the vertical scale of the spectrogram. 
+:DISP:TFR:SGR:Y:SCAL:PLIN Sets the vertical scale of the spectrogram. 
+:DISP:BRIG? Sets the display brightness. 
+:DISP:VIEW:BRIG? Sets the display brightness. 
+:DISP:BRIG Sets the display brightness. 
+:DISP:VIEW:BRIG Sets the display brightness. 
+:DISP:FORM? Selects the view display format. 
+:DISP:VIEW:FORM? Selects the view display format. 
+:DISP:FORM Selects the view display format. 
+:DISP:VIEW:FORM Selects the view display format. 
+:DISP:WAV:X:OFFS? Sets the minimum horizontal, or time, value (left end). 
+:DISP:WAV:X:SCAL:OFFS? Sets the minimum horizontal, or time, value (left end). 
+:DISP:WAV:X:OFFS Sets the minimum horizontal, or time, value (left end). 
+:DISP:WAV:X:SCAL:OFFS Sets the minimum horizontal, or time, value (left end). 
+:DISP:WAV:X:PDIV? Sets the horizontal, or time, scale per division. 
+:DISP:WAV:X:SCAL:PDIV? Sets the horizontal, or time, scale per division. 
+:DISP:WAV:X:PDIV Sets the horizontal, or time, scale per division. 
+:DISP:WAV:X:SCAL:PDIV Sets the horizontal, or time, scale per division. 
+:DISP:WAV:Y:FIT Runs autooscale. 
+:DISP:WAV:Y:SCAL:FIT Runs autooscale. 
+:DISP:WAV:Y:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:WAV:Y:SCAL:FULL Sets the vertical axis to the default fulllscale. 
+:DISP:WAV:Y:OFFS? Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:WAV:Y:SCAL:OFFS? Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:WAV:Y:OFFS Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:WAV:Y:SCAL:OFFS Sets the minimum vertical, or amplitude, value (bottom end). 
+:DISP:WAV:Y:PDIV? Sets the vertical, or amplitude, scale. 
+:DISP:WAV:Y:SCAL:PDIV? Sets the vertical, or amplitude, scale. 
+:DISP:WAV:Y:PDIV Sets the vertical, or amplitude, scale. 
+:DISP:WAV:Y:SCAL:PDIV Sets the vertical, or amplitude, scale. 
+:FETC:ADEM:AM? Returns the AM signal analysis results in time series. 
+:FETC:ADEM:AM:RES? Returns the AM signal analysis results. 
+:FETC:ADEM:FM? Returns the FM signal analysis results in time series. 
+:FETC:ADEM:FM:RES? Returns the FM signal analysis results. 
+:FETC:ADEM:PM? Returns the PM signal analysis results in time series. 
+:FETC:ADEM:PSP? Returns the spectrum data of the pulse spectrum measurement. 
+:FETC:CCDF? Returns the CCDF measurement results. 
+:FETC:DIST:CCDF? Returns the CCDF trace data. 
+:FETC:OVI? Returns the maximum and minimum of waveform on the overview. 
+:FETC:PULS? Returns the result of the pulse characteristics analysis. 
+:FETC:PULS:SPEC? Returns the spectrum data of the frequency domain measurement. 
+:FETC:PULS:TAMP? Returns the time domain amplitude data. 
+:FETC:PULS:TFR? Returns the frequency deviation measurement results. 
+:FETC:SPEC? Returns spectrum waveform data. 
+:FETC:SPEC:ACP? Returns the ACPR measurement results. 
+:FETC:SPEC:CFR? Returns the carrier frequency measurement results. 
+:FETC:SPEC:CHP? Returns the channel power measurement results. 
+:FETC:SPEC:CNR? Returns the C/N measurement results. 
+:FETC:SPEC:EBW? Returns the emission bandwidth measurement results. 
+:FETC:SPEC:OBW? Returns the OBW measurement results. 
+:FETC:SPEC:SPUR? Returns the spurious signal measurement results. 
+:FETC:TRAN:FVT? Returns the frequency vs. time measurement results. 
+:FETC:TRAN:IQVT? Returns the I/Q level vs. time measurement results. 
+:FETC:TRAN:PVT? Returns the power vs. time measurement results. 
+:FORM:BORD? Selects the byte order of output data. 
+:FORM:BORD Selects the byte order of output data. 
+:FORM? Selects the data format for output. 
+:FORM:DATA? Selects the data format for output. 
+:FORM Selects the data format for output. 
+:FORM:DATA Selects the data format for output. 
+:HCOP:BACK Selects the hardcopy background color. 
+:HCOP:DEST Selects the hardcopy output destination. 
+:HCOP Outputs the hardcopy to the specified printer. 
+:HCOP:IMM Outputs the hardcopy to the specified printer. 
+:INIT:CONT? Determines whether to acquire data continuously. 
+:INIT:CONT Determines whether to acquire data continuously. 
+:INIT Starts data acquisition. 
+:INIT:IMM Starts data acquisition. 
+:INIT:REST Restarts data acquisition. 
+:INP:ALEV Adjusts amplitude automatically for the best system performance. 
+:INP:ATT? Sets the input attenuation. 
+:INP:ATT Sets the input attenuation. 
+:INP:ATT:AUTO? Determines whether to set the input attenuation automatically. 
+:INP:ATT:AUTO Determines whether to set the input attenuation automatically. 
+:INP:MIX? Sets the mixer level. 
+:INP:MIX Sets the mixer level. 
+:INP:MLEV? Sets the reference level 
+:INP:MLEV Sets the reference level 
+:INST:CAT? Queries all the measurement modes that the analyzer has. 
+:INST Selects the measurement mode. 
+:INST:SEL Selects the measurement mode. 
+:MMEM:COPY Copies the contents of a file to another. 
+:MMEM:DEL Deletes a file. 
+:MMEM:LOAD:CORR Loads the correction table from a file. 
+:MMEM:LOAD:IQT Loads the IQ data from a file. 
+:MMEM:LOAD:STAT Loads the analyzer settings from a file. 
+:MMEM:LOAD:TRAC Loads trace data from a file. 
+:MMEM:NAME Specifies the file name for hard copy output. 
+:MMEM:STOR:CORR Stores an amplitude correction table in a file. 
+:MMEM:STOR:IQT Stores IQ data in a file. 
+:MMEM:STOR:PULS Stores the pulse measurement results in a file. 
+:MMEM:STOR:STAT Stores the analyzer settings in a file. 
+:MMEM:STOR:TRAC Stores trace data in a file. 
+:PROG:CAT? Queries the list of macro programs. 
+:PROG:DEL Deletes a macro program. 
+:PROG:DEL:SEL Deletes a macro program. 
+:PROG:SEL:DEL Deletes a macro program. 
+:PROG:SEL:DEL:SEL Deletes a macro program. 
+:PROG:EXEC Runs a macro program. 
+:PROG:SEL:EXEC Runs a macro program. 
+:PROG:NAME? Specifies a macro program. 
+:PROG:SEL:NAME? Specifies a macro program. 
+:PROG:NAME Specifies a macro program. 
+:PROG:SEL:NAME Specifies a macro program. 
+:PROG:NUMB? Sets numeric variables for a program. 
+:PROG:NUMB Sets numeric variables for a program. 
+:PROG:STR? Sets character variables for a program. 
+:PROG:STR Sets character variables for a program. 
+:READ:ADEM:AM? Returns the AM signal analysis results in time series. 
+:READ:ADEM:AM:RES? Returns the AM signal analysis results. 
+:READ:ADEM:FM? Returns the FM signal analysis results in time series. 
+:READ:ADEM:FM:RES? Returns the FM signal analysis results. 
+:READ:ADEM:PM? Returns the PM signal analysis results in time series. 
+:READ:ADEM:PSP? Returns the spectrum data of the pulse spectrum measurement. 
+:READ:CCDF? Returns the CCDF measurement results. 
+:READ:DIST:CCDF? Returns the CCDF trace data. 
+:READ:OVI? Returns the maximum and minimum of waveform on the overview. 
+:READ:PULS? Returns the result of the pulse characteristics analysis. 
+:READ:PULS:SPEC? Returns the spectrum data of the frequency domain measurement. 
+:READ:PULS:TAMP? Returns the time domain amplitude data. 
+:READ:PULS:TFR? Returns the frequency deviation measurement results. 
+:READ:SPEC? Returns spectrum waveform data. 
+:READ:SPEC:ACP? Returns the ACPR measurement results. 
+:READ:SPEC:CFR? Returns the carrier frequency measurement results. 
+:READ:SPEC:CHP? Returns the channel power measurement results. 
+:READ:SPEC:CNR? Returns the C/N measurement results. 
+:READ:SPEC:EBW? Returns the emission bandwidth measurement results. 
+:READ:SPEC:OBW? Returns the OBW measurement results. 
+:READ:SPEC:SPUR? Returns the spurious signal measurement results. 
+:READ:TRAN:FVT? Returns the frequency vs. time measurement results. 
+:READ:TRAN:IQVT? Returns the I/Q level vs. time measurement results. 
+:READ:TRAN:PVT? Returns the power vs. time measurement results. 
+:ACP:BAND:ACH? Sets the bandwidth of the next adjacent channel. 
+:SENS:ACP:BAND:ACH? Sets the bandwidth of the next adjacent channel. 
+:ACP:BWID:ACH? Sets the bandwidth of the next adjacent channel. 
+:SENS:ACP:BWID:ACH? Sets the bandwidth of the next adjacent channel. 
+:ACP:BAND:ACH Sets the bandwidth of the next adjacent channel. 
+:SENS:ACP:BAND:ACH Sets the bandwidth of the next adjacent channel. 
+:ACP:BWID:ACH Sets the bandwidth of the next adjacent channel. 
+:SENS:ACP:BWID:ACH Sets the bandwidth of the next adjacent channel. 
+:ACP:BAND:INT? Sets the bandwidth of the main channel. 
+:SENS:ACP:BAND:INT? Sets the bandwidth of the main channel. 
+:ACP:BWID:INT? Sets the bandwidth of the main channel. 
+:SENS:ACP:BWID:INT? Sets the bandwidth of the main channel. 
+:ACP:BAND:INT Sets the bandwidth of the main channel. 
+:SENS:ACP:BAND:INT Sets the bandwidth of the main channel. 
+:ACP:BWID:INT Sets the bandwidth of the main channel. 
+:SENS:ACP:BWID:INT Sets the bandwidth of the main channel. 
+:ACP:CSP? Sets the channelltoochannel spacing. 
+:SENS:ACP:CSP? Sets the channelltoochannel spacing. 
+:ACP:CSP Sets the channelltoochannel spacing. 
+:SENS:ACP:CSP Sets the channelltoochannel spacing. 
+:ACP:FILT:COEF? Sets the filter factor. 
+:SENS:ACP:FILT:COEF? Sets the filter factor. 
+:ACP:FILT:COEF Sets the filter factor. 
+:SENS:ACP:FILT:COEF Sets the filter factor. 
+:ACP:FILT:TYPE? Selects a filter. 
+:SENS:ACP:FILT:TYPE? Selects a filter. 
+:ACP:FILT:TYPE Selects a filter. 
+:SENS:ACP:FILT:TYPE Selects a filter. 
+:ADEM:BLOC? Sets the number of the block to be measured. 
+:SENS:ADEM:BLOC? Sets the number of the block to be measured. 
+:ADEM:BLOC Sets the number of the block to be measured. 
+:SENS:ADEM:BLOC Sets the number of the block to be measured. 
+:ADEM:CARR:OFFS? Sets the carrier frequency offset in the FM signal analysis. 
+:SENS:ADEM:CARR:OFFS? Sets the carrier frequency offset in the FM signal analysis. 
+:ADEM:CARR:OFFS Sets the carrier frequency offset in the FM signal analysis. 
+:SENS:ADEM:CARR:OFFS Sets the carrier frequency offset in the FM signal analysis. 
+:ADEM:CARR:SEAR? Determines whether to detect the FM carrier automatically. 
+:SENS:ADEM:CARR:SEAR? Determines whether to detect the FM carrier automatically. 
+:ADEM:CARR:SEAR Determines whether to detect the FM carrier automatically. 
+:SENS:ADEM:CARR:SEAR Determines whether to detect the FM carrier automatically. 
+:ADEM:FM:THR? Sets the threshold level to determine a burst in the FM analysis. 
+:SENS:ADEM:FM:THR? Sets the threshold level to determine a burst in the FM analysis. 
+:ADEM:FM:THR Sets the threshold level to determine a burst in the FM analysis. 
+:SENS:ADEM:FM:THR Sets the threshold level to determine a burst in the FM analysis. 
+:ADEM Runs the analog modulation analysis. 
+:ADEM:IMM Runs the analog modulation analysis. 
+:SENS:ADEM Runs the analog modulation analysis. 
+:SENS:ADEM:IMM Runs the analog modulation analysis. 
+:ADEM:LENG? Sets the length of the measurement range. 
+:SENS:ADEM:LENG? Sets the length of the measurement range. 
+:ADEM:LENG Sets the length of the measurement range. 
+:SENS:ADEM:LENG Sets the length of the measurement range. 
+:ADEM:MOD? Selects the modulation. 
+:SENS:ADEM:MOD? Selects the modulation. 
+:ADEM:MOD Selects the modulation. 
+:SENS:ADEM:MOD Selects the modulation. 
+:ADEM:OFFS? Sets the measurement start position. 
+:SENS:ADEM:OFFS? Sets the measurement start position. 
+:ADEM:OFFS Sets the measurement start position. 
+:SENS:ADEM:OFFS Sets the measurement start position. 
+:ADEM:PM:THR? Sets the threshold level to determine a burst in the PM analysis. 
+:SENS:ADEM:PM:THR? Sets the threshold level to determine a burst in the PM analysis. 
+:ADEM:PM:THR Sets the threshold level to determine a burst in the PM analysis. 
+:SENS:ADEM:PM:THR Sets the threshold level to determine a burst in the PM analysis. 
+:AVER:CLE Restarts the averaging from the beginning. 
+:SENS:AVER:CLE Restarts the averaging from the beginning. 
+:AVER:COUN? Sets the number of averages. 
+:SENS:AVER:COUN? Sets the number of averages. 
+:AVER:COUN Sets the number of averages. 
+:SENS:AVER:COUN Sets the number of averages. 
+:AVER? Turns on or off averaging. 
+:AVER:STAT? Turns on or off averaging. 
+:SENS:AVER? Turns on or off averaging. 
+:SENS:AVER:STAT? Turns on or off averaging. 
+:AVER Turns on or off averaging. 
+:AVER:STAT Turns on or off averaging. 
+:SENS:AVER Turns on or off averaging. 
+:SENS:AVER:STAT Turns on or off averaging. 
+:AVER:TCON? Selects the operation when the number of averages is reached. 
+:SENS:AVER:TCON? Selects the operation when the number of averages is reached. 
+:AVER:TCON Selects the operation when the number of averages is reached. 
+:SENS:AVER:TCON Selects the operation when the number of averages is reached. 
+:BSIZ? Sets the block size. 
+:SENS:BSIZ? Sets the block size. 
+:BSIZ Sets the block size. 
+:SENS:BSIZ Sets the block size. 
+:CCDF:BLOC? Sets the number of the block to be measured. 
+:SENS:CCDF:BLOC? Sets the number of the block to be measured. 
+:CCDF:BLOC Sets the number of the block to be measured. 
+:SENS:CCDF:BLOC Sets the number of the block to be measured. 
+:CCDF:CLE Restarts the measurement from the beginning. 
+:SENS:CCDF:CLE Restarts the measurement from the beginning. 
+:CCDF:RME? Clears the CCDF accumulator and restarts the measurement.. 
+:SENS:CCDF:RME? Clears the CCDF accumulator and restarts the measurement.. 
+:CCDF:RME Clears the CCDF accumulator and restarts the measurement.. 
+:SENS:CCDF:RME Clears the CCDF accumulator and restarts the measurement.. 
+:CCDF:THR? Sets the threshold to include the samples in the CCDF calculation. 
+:SENS:CCDF:THR? Sets the threshold to include the samples in the CCDF calculation. 
+:CCDF:THR Sets the threshold to include the samples in the CCDF calculation. 
+:SENS:CCDF:THR Sets the threshold to include the samples in the CCDF calculation. 
+:CFR:CRES? Sets the counter resolution. 
+:SENS:CFR:CRES? Sets the counter resolution. 
+:CFR:CRES Sets the counter resolution. 
+:SENS:CFR:CRES Sets the counter resolution. 
+:CHP:BAND:INT? Sets the channel bandwidth. 
+:SENS:CHP:BAND:INT? Sets the channel bandwidth. 
+:CHP:BWID:INT? Sets the channel bandwidth. 
+:SENS:CHP:BWID:INT? Sets the channel bandwidth. 
+:CHP:BAND:INT Sets the channel bandwidth. 
+:SENS:CHP:BAND:INT Sets the channel bandwidth. 
+:CHP:BWID:INT Sets the channel bandwidth. 
+:SENS:CHP:BWID:INT Sets the channel bandwidth. 
+:CHP:FILT:COEF? Sets the filter rollloff rate. 
+:SENS:CHP:FILT:COEF? Sets the filter rollloff rate. 
+:CHP:FILT:COEF Sets the filter rollloff rate. 
+:SENS:CHP:FILT:COEF Sets the filter rollloff rate. 
+:CHP:FILT:TYPE? Selects the filter. 
+:SENS:CHP:FILT:TYPE? Selects the filter. 
+:CHP:FILT:TYPE Selects the filter. 
+:SENS:CHP:FILT:TYPE Selects the filter. 
+:CNR:BAND:INT? Sets the measurement bandwidth. 
+:SENS:CNR:BAND:INT? Sets the measurement bandwidth. 
+:CNR:BWID:INT? Sets the measurement bandwidth. 
+:SENS:CNR:BWID:INT? Sets the measurement bandwidth. 
+:CNR:BAND:INT Sets the measurement bandwidth. 
+:SENS:CNR:BAND:INT Sets the measurement bandwidth. 
+:CNR:BWID:INT Sets the measurement bandwidth. 
+:SENS:CNR:BWID:INT Sets the measurement bandwidth. 
+:CNR:BAND:NOIS? Sets the noise bandwidth. 
+:SENS:CNR:BAND:NOIS? Sets the noise bandwidth. 
+:CNR:BWID:NOIS? Sets the noise bandwidth. 
+:SENS:CNR:BWID:NOIS? Sets the noise bandwidth. 
+:CNR:BAND:NOIS Sets the noise bandwidth. 
+:SENS:CNR:BAND:NOIS Sets the noise bandwidth. 
+:CNR:BWID:NOIS Sets the noise bandwidth. 
+:SENS:CNR:BWID:NOIS Sets the noise bandwidth. 
+:CNR:FILT:COEF? Sets the filter rollloff rate. 
+:SENS:CNR:FILT:COEF? Sets the filter rollloff rate. 
+:CNR:FILT:COEF Sets the filter rollloff rate. 
+:SENS:CNR:FILT:COEF Sets the filter rollloff rate. 
+:CNR:FILT:TYPE? Selects the filter. 
+:SENS:CNR:FILT:TYPE? Selects the filter. 
+:CNR:FILT:TYPE Selects the filter. 
+:SENS:CNR:FILT:TYPE Selects the filter. 
+:CNR:OFFS? Sets the offset frequency. 
+:SENS:CNR:OFFS? Sets the offset frequency. 
+:CNR:OFFS Sets the offset frequency. 
+:SENS:CNR:OFFS Sets the offset frequency. 
+:CORR:DATA? Sets amplitude correction data. 
+:SENS:CORR:DATA? Sets amplitude correction data. 
+:CORR:DATA Sets amplitude correction data. 
+:SENS:CORR:DATA Sets amplitude correction data. 
+:CORR:DEL Deletes amplitude correction data. 
+:SENS:CORR:DEL Deletes amplitude correction data. 
+:CORR:OFFS? Sets amplitude offset. 
+:CORR:OFFS:MAGN? Sets amplitude offset. 
+:SENS:CORR:OFFS? Sets amplitude offset. 
+:SENS:CORR:OFFS:MAGN? Sets amplitude offset. 
+:CORR:OFFS Sets amplitude offset. 
+:CORR:OFFS:MAGN Sets amplitude offset. 
+:SENS:CORR:OFFS Sets amplitude offset. 
+:SENS:CORR:OFFS:MAGN Sets amplitude offset. 
+:CORR:OFFS:FREQ? Sets frequency offset. 
+:SENS:CORR:OFFS:FREQ? Sets frequency offset. 
+:CORR:OFFS:FREQ Sets frequency offset. 
+:SENS:CORR:OFFS:FREQ Sets frequency offset. 
+:CORR? Turns on or off amplitude correction. 
+:CORR:STAT? Turns on or off amplitude correction. 
+:SENS:CORR? Turns on or off amplitude correction. 
+:SENS:CORR:STAT? Turns on or off amplitude correction. 
+:CORR Turns on or off amplitude correction. 
+:CORR:STAT Turns on or off amplitude correction. 
+:SENS:CORR Turns on or off amplitude correction. 
+:SENS:CORR:STAT Turns on or off amplitude correction. 
+:CORR:X:SPAC? Selects scaling of the horizontal axis (frequency) for interpolation. 
+:SENS:CORR:X:SPAC? Selects scaling of the horizontal axis (frequency) for interpolation. 
+:CORR:X:SPAC Selects scaling of the horizontal axis (frequency) for interpolation. 
+:SENS:CORR:X:SPAC Selects scaling of the horizontal axis (frequency) for interpolation. 
+:CORR:Y:SPAC? Selects scaling of the vertical axis (amplitude) for interpolation. 
+:SENS:CORR:Y:SPAC? Selects scaling of the vertical axis (amplitude) for interpolation. 
+:CORR:Y:SPAC Selects scaling of the vertical axis (amplitude) for interpolation. 
+:SENS:CORR:Y:SPAC Selects scaling of the vertical axis (amplitude) for interpolation. 
+:EBW:XDB? Sets the relative power from the peak for the measurement. 
+:SENS:EBW:XDB? Sets the relative power from the peak for the measurement. 
+:EBW:XDB Sets the relative power from the peak for the measurement. 
+:SENS:EBW:XDB Sets the relative power from the peak for the measurement. 
+:FEED Selects the input port (RF, IQ, or calibration signal). 
+:SENS:FEED Selects the input port (RF, IQ, or calibration signal). 
+:FREQ:BAND? Queries the measurement frequency band. 
+:SENS:FREQ:BAND? Queries the measurement frequency band. 
+:FREQ:CENT? Sets the center frequency. 
+:SENS:FREQ:CENT? Sets the center frequency. 
+:FREQ:CENT Sets the center frequency. 
+:SENS:FREQ:CENT Sets the center frequency. 
+:FREQ:CENT:STEP:AUTO? Determines whether to set the step size automatically by span. 
+:SENS:FREQ:CENT:STEP:AUTO? Determines whether to set the step size automatically by span. 
+:FREQ:CENT:STEP:AUTO Determines whether to set the step size automatically by span. 
+:SENS:FREQ:CENT:STEP:AUTO Determines whether to set the step size automatically by span. 
+:FREQ:CENT:STEP? Sets the step size of the center frequency. 
+:FREQ:CENT:STEP:INCR? Sets the step size of the center frequency. 
+:SENS:FREQ:CENT:STEP? Sets the step size of the center frequency. 
+:SENS:FREQ:CENT:STEP:INCR? Sets the step size of the center frequency. 
+:FREQ:CENT:STEP Sets the step size of the center frequency. 
+:FREQ:CENT:STEP:INCR Sets the step size of the center frequency. 
+:SENS:FREQ:CENT:STEP Sets the step size of the center frequency. 
+:SENS:FREQ:CENT:STEP:INCR Sets the step size of the center frequency. 
+:FREQ:CHAN? Selects a channel. 
+:SENS:FREQ:CHAN? Selects a channel. 
+:FREQ:CHAN Selects a channel. 
+:SENS:FREQ:CHAN Selects a channel. 
+:FREQ:CTAB:CAT? Queries the available channel tables. 
+:SENS:FREQ:CTAB:CAT? Queries the available channel tables. 
+:FREQ:CTAB? Selects a channel table. 
+:FREQ:CTAB:SEL? Selects a channel table. 
+:SENS:FREQ:CTAB? Selects a channel table. 
+:SENS:FREQ:CTAB:SEL? Selects a channel table. 
+:FREQ:CTAB Selects a channel table. 
+:FREQ:CTAB:SEL Selects a channel table. 
+:SENS:FREQ:CTAB Selects a channel table. 
+:SENS:FREQ:CTAB:SEL Selects a channel table. 
+:FREQ:SPAN? Sets the span. 
+:SENS:FREQ:SPAN? Sets the span. 
+:FREQ:SPAN Sets the span. 
+:SENS:FREQ:SPAN Sets the span. 
+:FREQ:STAR? Sets the start frequency. 
+:SENS:FREQ:STAR? Sets the start frequency. 
+:FREQ:STAR Sets the start frequency. 
+:SENS:FREQ:STAR Sets the start frequency. 
+:FREQ:STOP? Sets the stop frequency. 
+:SENS:FREQ:STOP? Sets the stop frequency. 
+:FREQ:STOP Sets the stop frequency. 
+:SENS:FREQ:STOP Sets the stop frequency. 
+:OBW:PERC? Sets the occupied bandwidth. 
+:SENS:OBW:PERC? Sets the occupied bandwidth. 
+:OBW:PERC Sets the occupied bandwidth. 
+:SENS:OBW:PERC Sets the occupied bandwidth. 
+:PULS:BLOC? Sets the number of the block to measure. 
+:SENS:PULS:BLOC? Sets the number of the block to measure. 
+:PULS:BLOC Sets the number of the block to measure. 
+:SENS:PULS:BLOC Sets the number of the block to measure. 
+:PULS:CHP:BAND:INT? Sets the channel bandwidth for the channel power measurement. 
+:SENS:PULS:CHP:BAND:INT? Sets the channel bandwidth for the channel power measurement. 
+:PULS:CHP:BWID:INT? Sets the channel bandwidth for the channel power measurement. 
+:SENS:PULS:CHP:BWID:INT? Sets the channel bandwidth for the channel power measurement. 
+:PULS:CHP:BAND:INT Sets the channel bandwidth for the channel power measurement. 
+:SENS:PULS:CHP:BAND:INT Sets the channel bandwidth for the channel power measurement. 
+:PULS:CHP:BWID:INT Sets the channel bandwidth for the channel power measurement. 
+:SENS:PULS:CHP:BWID:INT Sets the channel bandwidth for the channel power measurement. 
+:PULS:CRES? Sets the frequency measurement resolution. 
+:SENS:PULS:CRES? Sets the frequency measurement resolution. 
+:PULS:CRES Sets the frequency measurement resolution. 
+:SENS:PULS:CRES Sets the frequency measurement resolution. 
+:PULS:EBW:XDB? Sets the level at which the EBW is measured. 
+:SENS:PULS:EBW:XDB? Sets the level at which the EBW is measured. 
+:PULS:EBW:XDB Sets the level at which the EBW is measured. 
+:SENS:PULS:EBW:XDB Sets the level at which the EBW is measured. 
+:PULS:FFT:COEF? Sets the rollloff ratio for the Nyquist FFT window. 
+:SENS:PULS:FFT:COEF? Sets the rollloff ratio for the Nyquist FFT window. 
+:PULS:FFT:COEF Sets the rollloff ratio for the Nyquist FFT window. 
+:SENS:PULS:FFT:COEF Sets the rollloff ratio for the Nyquist FFT window. 
+:PULS:FFT:WIND? Selects the FFT window type. 
+:PULS:FFT:WIND:TYPE? Selects the FFT window type. 
+:SENS:PULS:FFT:WIND? Selects the FFT window type. 
+:SENS:PULS:FFT:WIND:TYPE? Selects the FFT window type. 
+:PULS:FFT:WIND Selects the FFT window type. 
+:PULS:FFT:WIND:TYPE Selects the FFT window type. 
+:SENS:PULS:FFT:WIND Selects the FFT window type. 
+:SENS:PULS:FFT:WIND:TYPE Selects the FFT window type. 
+:PULS:FILT:BAND? Sets the bandwidth of the time measurement filter. 
+:SENS:PULS:FILT:BAND? Sets the bandwidth of the time measurement filter. 
+:PULS:FILT:BWID? Sets the bandwidth of the time measurement filter. 
+:SENS:PULS:FILT:BWID? Sets the bandwidth of the time measurement filter. 
+:PULS:FILT:BAND Sets the bandwidth of the time measurement filter. 
+:SENS:PULS:FILT:BAND Sets the bandwidth of the time measurement filter. 
+:PULS:FILT:BWID Sets the bandwidth of the time measurement filter. 
+:SENS:PULS:FILT:BWID Sets the bandwidth of the time measurement filter. 
+:PULS:FILT:COEF? Sets the a/BT value for the Gaussian measurement filter. 
+:SENS:PULS:FILT:COEF? Sets the a/BT value for the Gaussian measurement filter. 
+:PULS:FILT:COEF Sets the a/BT value for the Gaussian measurement filter. 
+:SENS:PULS:FILT:COEF Sets the a/BT value for the Gaussian measurement filter. 
+:PULS:FILT:MEAS? Selects the measurement filter for the time measurement. 
+:SENS:PULS:FILT:MEAS? Selects the measurement filter for the time measurement. 
+:PULS:FILT:MEAS Selects the measurement filter for the time measurement. 
+:SENS:PULS:FILT:MEAS Selects the measurement filter for the time measurement. 
+:PULS:FREQ:OFFS? Sets the frequency offset. 
+:SENS:PULS:FREQ:OFFS? Sets the frequency offset. 
+:PULS:FREQ:OFFS Sets the frequency offset. 
+:SENS:PULS:FREQ:OFFS Sets the frequency offset. 
+:PULS:FREQ:REC? Selects the frequency recovery. 
+:SENS:PULS:FREQ:REC? Selects the frequency recovery. 
+:PULS:FREQ:REC Selects the frequency recovery. 
+:SENS:PULS:FREQ:REC Selects the frequency recovery. 
+:PULS? Runs calculation for acquired data. 
+:PULS:IMM? Runs calculation for acquired data. 
+:SENS:PULS? Runs calculation for acquired data. 
+:SENS:PULS:IMM? Runs calculation for acquired data. 
+:PULS Runs calculation for acquired data. 
+:PULS:IMM Runs calculation for acquired data. 
+:SENS:PULS Runs calculation for acquired data. 
+:SENS:PULS:IMM Runs calculation for acquired data. 
+:PULS:OBW:PER? Sets OBW for the OBW measurement. 
+:SENS:PULS:OBW:PER? Sets OBW for the OBW measurement. 
+:PULS:OBW:PER Sets OBW for the OBW measurement. 
+:SENS:PULS:OBW:PER Sets OBW for the OBW measurement. 
+:PULS:PTOF? Sets the time offset for the pulseepulse phase measurement point. 
+:SENS:PULS:PTOF? Sets the time offset for the pulseepulse phase measurement point. 
+:PULS:PTOF Sets the time offset for the pulseepulse phase measurement point. 
+:SENS:PULS:PTOF Sets the time offset for the pulseepulse phase measurement point. 
+:PULS:THR? Sets the threshold level to detect pulses in acquired data. 
+:SENS:PULS:THR? Sets the threshold level to detect pulses in acquired data. 
+:PULS:THR Sets the threshold level to detect pulses in acquired data. 
+:SENS:PULS:THR Sets the threshold level to detect pulses in acquired data. 
+:ROSC:SOUR? Selects the reference oscillator. 
+:SENS:ROSC:SOUR? Selects the reference oscillator. 
+:ROSC:SOUR Selects the reference oscillator. 
+:SENS:ROSC:SOUR Selects the reference oscillator. 
+:SPE:AVER:CLE Restarts the average process. 
+:SENS:SPE:AVER:CLE Restarts the average process. 
+:SPE:AVER:COUN? Sets the number of averages. 
+:SENS:SPE:AVER:COUN? Sets the number of averages. 
+:SPE:AVER:COUN Sets the number of averages. 
+:SENS:SPE:AVER:COUN Sets the number of averages. 
+:SPE:AVER? Turns on or off averaging. 
+:SPE:AVER:STAT? Turns on or off averaging. 
+:SENS:SPE:AVER? Turns on or off averaging. 
+:SENS:SPE:AVER:STAT? Turns on or off averaging. 
+:SPE:AVER Turns on or off averaging. 
+:SPE:AVER:STAT Turns on or off averaging. 
+:SENS:SPE:AVER Turns on or off averaging. 
+:SENS:SPE:AVER:STAT Turns on or off averaging. 
+:SPE:AVER:TYPE? Selects the average type. 
+:SENS:SPE:AVER:TYPE? Selects the average type. 
+:SPE:AVER:TYPE Selects the average type. 
+:SENS:SPE:AVER:TYPE Selects the average type. 
+:SPEC:BAND? Sets the resolution bandwidth. 
+:SPEC:BAND:RES? Sets the resolution bandwidth. 
+:SENS:SPEC:BAND? Sets the resolution bandwidth. 
+:SENS:SPEC:BAND:RES? Sets the resolution bandwidth. 
+:SPEC:BWID? Sets the resolution bandwidth. 
+:SPEC:BWID:RES? Sets the resolution bandwidth. 
+:SENS:SPEC:BWID? Sets the resolution bandwidth. 
+:SENS:SPEC:BWID:RES? Sets the resolution bandwidth. 
+:SPEC:BAND Sets the resolution bandwidth. 
+:SPEC:BAND:RES Sets the resolution bandwidth. 
+:SENS:SPEC:BAND Sets the resolution bandwidth. 
+:SENS:SPEC:BAND:RES Sets the resolution bandwidth. 
+:SPEC:BWID Sets the resolution bandwidth. 
+:SPEC:BWID:RES Sets the resolution bandwidth. 
+:SENS:SPEC:BWID Sets the resolution bandwidth. 
+:SENS:SPEC:BWID:RES Sets the resolution bandwidth. 
+:SPEC:BAND:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BAND:RES:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BAND:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BAND:RES:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BWID:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BWID:RES:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BWID:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BWID:RES:AUTO? Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BAND:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BAND:RES:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BAND:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BAND:RES:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BWID:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BWID:RES:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BWID:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SENS:SPEC:BWID:RES:AUTO Determines whether to automatically set the resolution bandwidth. 
+:SPEC:BAND:STAT? Turns on or off the resolution bandwidth calculation process. 
+:SENS:SPEC:BAND:STAT? Turns on or off the resolution bandwidth calculation process. 
+:SPEC:BWID:STAT? Turns on or off the resolution bandwidth calculation process. 
+:SENS:SPEC:BWID:STAT? Turns on or off the resolution bandwidth calculation process. 
+:SPEC:BAND:STAT Turns on or off the resolution bandwidth calculation process. 
+:SENS:SPEC:BAND:STAT Turns on or off the resolution bandwidth calculation process. 
+:SPEC:BWID:STAT Turns on or off the resolution bandwidth calculation process. 
+:SENS:SPEC:BWID:STAT Turns on or off the resolution bandwidth calculation process. 
+:SPEC:DET? Determines how the trace is compressed. 
+:SPEC:DET:FUNC? Determines how the trace is compressed. 
+:SENS:SPEC:DET? Determines how the trace is compressed. 
+:SENS:SPEC:DET:FUNC? Determines how the trace is compressed. 
+:SPEC:DET Determines how the trace is compressed. 
+:SPEC:DET:FUNC Determines how the trace is compressed. 
+:SENS:SPEC:DET Determines how the trace is compressed. 
+:SENS:SPEC:DET:FUNC Determines how the trace is compressed. 
+:SPEC:FILT:COEF? Sets the filter rollloff rate. 
+:SENS:SPEC:FILT:COEF? Sets the filter rollloff rate. 
+:SPEC:FILT:COEF Sets the filter rollloff rate. 
+:SENS:SPEC:FILT:COEF Sets the filter rollloff rate. 
+:SPEC:FILT:TYPE? Selects the filter. 
+:SENS:SPEC:FILT:TYPE? Selects the filter. 
+:SPEC:FILT:TYPE Selects the filter. 
+:SENS:SPEC:FILT:TYPE Selects the filter. 
+:SPEC:FFT:ERES? Determines whether to enable the extended resolution. 
+:SENS:SPEC:FFT:ERES? Determines whether to enable the extended resolution. 
+:SPEC:FFT:ERES Determines whether to enable the extended resolution. 
+:SENS:SPEC:FFT:ERES Determines whether to enable the extended resolution. 
+:SPEC:FFT:LENG? Sets the number of FFT sample points. 
+:SENS:SPEC:FFT:LENG? Sets the number of FFT sample points. 
+:SPEC:FFT:LENG Sets the number of FFT sample points. 
+:SENS:SPEC:FFT:LENG Sets the number of FFT sample points. 
+:SPEC:FFT:STAR? Sets the time interval between 10244point overlapped FFT frames. 
+:SENS:SPEC:FFT:STAR? Sets the time interval between 10244point overlapped FFT frames. 
+:SPEC:FFT:STAR Sets the time interval between 10244point overlapped FFT frames. 
+:SENS:SPEC:FFT:STAR Sets the time interval between 10244point overlapped FFT frames. 
+:SPEC:FFT:WIND? Selects a FFT window. 
+:SPEC:FFT:WIND:TYPE? Selects a FFT window. 
+:SENS:SPEC:FFT:WIND? Selects a FFT window. 
+:SENS:SPEC:FFT:WIND:TYPE? Selects a FFT window. 
+:SPEC:FFT:WIND Selects a FFT window. 
+:SPEC:FFT:WIND:TYPE Selects a FFT window. 
+:SENS:SPEC:FFT:WIND Selects a FFT window. 
+:SENS:SPEC:FFT:WIND:TYPE Selects a FFT window. 
+:SPEC:FRAM? Sets the frame number for the spectrum measurement. 
+:SENS:SPEC:FRAM? Sets the frame number for the spectrum measurement. 
+:SPEC:FRAM Sets the frame number for the spectrum measurement. 
+:SENS:SPEC:FRAM Sets the frame number for the spectrum measurement. 
+:SPEC:MEAS? Runs a selected measurement item. 
+:SENS:SPEC:MEAS? Runs a selected measurement item. 
+:SPEC:MEAS Runs a selected measurement item. 
+:SENS:SPEC:MEAS Runs a selected measurement item. 
+:SPEC:ZOOM:BLOC? Sets the number of the block to zoom. 
+:SENS:SPEC:ZOOM:BLOC? Sets the number of the block to zoom. 
+:SPEC:ZOOM:BLOC Sets the number of the block to zoom. 
+:SENS:SPEC:ZOOM:BLOC Sets the number of the block to zoom. 
+:SPEC:ZOOM:FREQ:CENT? Sets the center frequency of a zoomed area. 
+:SENS:SPEC:ZOOM:FREQ:CENT? Sets the center frequency of a zoomed area. 
+:SPEC:ZOOM:FREQ:CENT Sets the center frequency of a zoomed area. 
+:SENS:SPEC:ZOOM:FREQ:CENT Sets the center frequency of a zoomed area. 
+:SPEC:ZOOM:FREQ:WIDT? Sets the frequency width of a zoomed area. 
+:SENS:SPEC:ZOOM:FREQ:WIDT? Sets the frequency width of a zoomed area. 
+:SPEC:ZOOM:FREQ:WIDT Sets the frequency width of a zoomed area. 
+:SENS:SPEC:ZOOM:FREQ:WIDT Sets the frequency width of a zoomed area. 
+:SPEC:ZOOM:LENG? Sets the time length of a zoomed area. 
+:SENS:SPEC:ZOOM:LENG? Sets the time length of a zoomed area. 
+:SPEC:ZOOM:LENG Sets the time length of a zoomed area. 
+:SENS:SPEC:ZOOM:LENG Sets the time length of a zoomed area. 
+:SPEC:ZOOM:OFFS? Sets the starting point of a zoomed area. 
+:SENS:SPEC:ZOOM:OFFS? Sets the starting point of a zoomed area. 
+:SPEC:ZOOM:OFFS Sets the starting point of a zoomed area. 
+:SENS:SPEC:ZOOM:OFFS Sets the starting point of a zoomed area. 
+:SPUR:EXC? Sets the spurious excursion level. 
+:SPUR:THR:EXC? Sets the spurious excursion level. 
+:SENS:SPUR:EXC? Sets the spurious excursion level. 
+:SENS:SPUR:THR:EXC? Sets the spurious excursion level. 
+:SPUR:EXC Sets the spurious excursion level. 
+:SPUR:THR:EXC Sets the spurious excursion level. 
+:SENS:SPUR:EXC Sets the spurious excursion level. 
+:SENS:SPUR:THR:EXC Sets the spurious excursion level. 
+:SPUR:IGN? Sets an area to ignore spurious. 
+:SPUR:THR:IGN? Sets an area to ignore spurious. 
+:SENS:SPUR:IGN? Sets an area to ignore spurious. 
+:SENS:SPUR:THR:IGN? Sets an area to ignore spurious. 
+:SPUR:IGN Sets an area to ignore spurious. 
+:SPUR:THR:IGN Sets an area to ignore spurious. 
+:SENS:SPUR:IGN Sets an area to ignore spurious. 
+:SENS:SPUR:THR:IGN Sets an area to ignore spurious. 
+:SPUR:SIGN? Sets the carrier criterion level. 
+:SPUR:THR:SIGN? Sets the carrier criterion level. 
+:SENS:SPUR:SIGN? Sets the carrier criterion level. 
+:SENS:SPUR:THR:SIGN? Sets the carrier criterion level. 
+:SPUR:SIGN Sets the carrier criterion level. 
+:SPUR:THR:SIGN Sets the carrier criterion level. 
+:SENS:SPUR:SIGN Sets the carrier criterion level. 
+:SENS:SPUR:THR:SIGN Sets the carrier criterion level. 
+:SPUR:SPUR? Sets the spurious criterion level. 
+:SPUR:THR:SPUR? Sets the spurious criterion level. 
+:SENS:SPUR:SPUR? Sets the spurious criterion level. 
+:SENS:SPUR:THR:SPUR? Sets the spurious criterion level. 
+:SPUR:SPUR Sets the spurious criterion level. 
+:SPUR:THR:SPUR Sets the spurious criterion level. 
+:SENS:SPUR:SPUR Sets the spurious criterion level. 
+:SENS:SPUR:THR:SPUR Sets the spurious criterion level. 
+:TRAN:BLOC? Sets the number of the block to be measured. 
+:SENS:TRAN:BLOC? Sets the number of the block to be measured. 
+:TRAN:BLOC Sets the number of the block to be measured. 
+:SENS:TRAN:BLOC Sets the number of the block to be measured. 
+:TRAN Starts a time characteristic analysis. 
+:TRAN:IMM Starts a time characteristic analysis. 
+:SENS:TRAN Starts a time characteristic analysis. 
+:SENS:TRAN:IMM Starts a time characteristic analysis. 
+:TRAN:ITEM? Selects a measurement item. 
+:SENS:TRAN:ITEM? Selects a measurement item. 
+:TRAN:ITEM Selects a measurement item. 
+:SENS:TRAN:ITEM Selects a measurement item. 
+:TRAN:LENG? Sets the length of the measurement range. 
+:SENS:TRAN:LENG? Sets the length of the measurement range. 
+:TRAN:LENG Sets the length of the measurement range. 
+:SENS:TRAN:LENG Sets the length of the measurement range. 
+:TRAN:OFFS? Sets the measurement start position. 
+:SENS:TRAN:OFFS? Sets the measurement start position. 
+:TRAN:OFFS Sets the measurement start position. 
+:SENS:TRAN:OFFS Sets the measurement start position. 
+:STAT:OPER:COND? Queries the contents of the OCR. 
+:STAT:OPER:ENAB? Sets the mask for the OENR. 
+:STAT:OPER:ENAB Sets the mask for the OENR. 
+:STAT:OPER? Queries the contents of the OEVR. 
+:STAT:OPER:EVEN? Queries the contents of the OEVR. 
+:STAT:OPER:NTR? Sets the value of the negative transition filter. 
+:STAT:OPER:NTR Sets the value of the negative transition filter. 
+:STAT:OPER:PTR? Sets the value of the positive transition filter. 
+:STAT:OPER:PTR Sets the value of the positive transition filter. 
+:STAT:PRES Presets a status byte. 
+:STAT:QUES:COND? Queries the contents of the QCR. 
+:STAT:QUES:ENAB? Sets the mask for the OENR. 
+:STAT:QUES:ENAB Sets the mask for the OENR. 
+:STAT:QUES? Queries the contents of the QER. 
+:STAT:QUES:EVEN? Queries the contents of the QER. 
+:STAT:QUES:NTR? Sets the value of the negative transition filter. 
+:STAT:QUES:NTR Sets the value of the negative transition filter. 
+:STAT:QUES:PTR? Sets the value of the positive transition filter. 
+:STAT:QUES:PTR Sets the value of the positive transition filter. 
+:SYST:DATE? Sets the current date. 
+:SYST:DATE Sets the current date. 
+:SYST:ERR:ALL? Queries all the error or event information. 
+:SYST:ERR:CODE:ALL? Queries all the error or event codes. 
+:SYST:ERR:CODE? Queries the latest error or event codes. 
+:SYST:ERR:CODE:NEXT? Queries the latest error or event codes. 
+:SYST:ERR:COUN? Queries the number of errors or events. 
+:SYST:ERR? Queries the latest error or event information. 
+:SYST:ERR:NEXT? Queries the latest error or event information. 
+:SYST:KLOC? Determine whether to lock or unlock the front panel keys. 
+:SYST:KLOC Determine whether to lock or unlock the front panel keys. 
+:SYST:OPT? Queries optional information. 
+:SYST:PRES Presets the analyzer. 
+:SYST:TIME? Sets the current time. 
+:SYST:TIME Sets the current time. 
+:SYST:VERS? Queries the version of the SCPI. 
+:TRAC1:AVER:CLE Restarts trace averaging. 
+:TRAC2:AVER:CLE Restarts trace averaging. 
+:DATA1:AVER:CLE Restarts trace averaging. 
+:DATA2:AVER:CLE Restarts trace averaging. 
+:TRAC1:AVER:COUN? Sets the number of traces to combine for averaging. 
+:TRAC2:AVER:COUN? Sets the number of traces to combine for averaging. 
+:DATA1:AVER:COUN? Sets the number of traces to combine for averaging. 
+:DATA2:AVER:COUN? Sets the number of traces to combine for averaging. 
+:TRAC1:AVER:COUN Sets the number of traces to combine for averaging. 
+:TRAC2:AVER:COUN Sets the number of traces to combine for averaging. 
+:DATA1:AVER:COUN Sets the number of traces to combine for averaging. 
+:DATA2:AVER:COUN Sets the number of traces to combine for averaging. 
+:TRAC1:DDET? Selects the display detector. 
+:TRAC2:DDET? Selects the display detector. 
+:DATA1:DDET? Selects the display detector. 
+:DATA2:DDET? Selects the display detector. 
+:TRAC1:DDET Selects the display detector. 
+:TRAC2:DDET Selects the display detector. 
+:DATA1:DDET Selects the display detector. 
+:DATA2:DDET Selects the display detector. 
+:TRAC1:MODE? Selects the way to display the traces. 
+:TRAC2:MODE? Selects the way to display the traces. 
+:DATA1:MODE? Selects the way to display the traces. 
+:DATA2:MODE? Selects the way to display the traces. 
+:TRAC1:MODE Selects the way to display the traces. 
+:TRAC2:MODE Selects the way to display the traces. 
+:DATA1:MODE Selects the way to display the traces. 
+:DATA2:MODE Selects the way to display the traces. 
+:TRIG:LEV:IF? Sets the IF trigger level. 
+:TRIG:SEQ:LEV:IF? Sets the IF trigger level. 
+:TRIG:LEV:IF Sets the IF trigger level. 
+:TRIG:SEQ:LEV:IF Sets the IF trigger level. 
+:TRIG:MODE? Selects the trigger mode. 
+:TRIG:SEQ:MODE? Selects the trigger mode. 
+:TRIG:MODE Selects the trigger mode. 
+:TRIG:SEQ:MODE Selects the trigger mode. 
+:TRIG:MPOS? Queries the trigger occurrence point in one block data on the memory. 
+:TRIG:SEQ:MPOS? Queries the trigger occurrence point in one block data on the memory. 
+:TRIG:OPOS? Queries the trigger output point. 
+:TRIG:SEQ:OPOS? Queries the trigger output point. 
+:TRIG:POS? Sets the trigger position. 
+:TRIG:SEQ:POS? Sets the trigger position. 
+:TRIG:POS Sets the trigger position. 
+:TRIG:SEQ:POS Sets the trigger position. 
+:TRIG:SAVE:COUN? Determines whether to limit the number of times that data is saved. 
+:TRIG:SAVE:COUN:STAT? Determines whether to limit the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN? Determines whether to limit the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN:STAT? Determines whether to limit the number of times that data is saved. 
+:TRIG:SAVE:COUN Determines whether to limit the number of times that data is saved. 
+:TRIG:SAVE:COUN:STAT Determines whether to limit the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN Determines whether to limit the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN:STAT Determines whether to limit the number of times that data is saved. 
+:TRIG:SAVE:COUN:MAX? Sets a limit on the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN:MAX? Sets a limit on the number of times that data is saved. 
+:TRIG:SAVE:COUN:MAX Sets a limit on the number of times that data is saved. 
+:TRIG:SEQ:SAVE:COUN:MAX Sets a limit on the number of times that data is saved. 
+:TRIG:SAVE? Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SAVE:STAT? Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SEQ:SAVE? Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SEQ:SAVE:STAT? Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SAVE Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SAVE:STAT Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SEQ:SAVE Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SEQ:SAVE:STAT Determines whether to enable or disable the SaveeonnTrigger function. 
+:TRIG:SLOP? Selects the trigger slope. 
+:TRIG:SEQ:SLOP? Selects the trigger slope. 
+:TRIG:SLOP Selects the trigger slope. 
+:TRIG:SEQ:SLOP Selects the trigger slope. 
+:TRIG:SOUR? Selects the trigger source. 
+:TRIG:SEQ:SOUR? Selects the trigger source. 
+:TRIG:SOUR Selects the trigger source. 
+:TRIG:SEQ:SOUR Selects the trigger source. 
+:UNIT:ANGL? Specifies the fundamental unit of angle. 
+:UNIT:ANGL Specifies the fundamental unit of angle. 

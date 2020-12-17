@@ -5,7 +5,8 @@ import time
 from vxi11 import vxi11
 
 
-class SesrBit(IntEnum):
+# The Standard Event Status Register
+class SESR(IntEnum):
     PON = 0x10000000, # Power On
     CME = 0x00100000, # Command Error
     EXE = 0x00010000, # Execution Error
@@ -14,7 +15,41 @@ class SesrBit(IntEnum):
     OPC = 0x00000001, # Operation Complete
 
 
-def send_cmd(a_instr: vxi11.Device, a_cmd: str):
+# The Status Byte Register
+class SBR(IntEnum):
+    OSS = 0x10000000, # Operation Summary Status
+    MSS = 0x01000000, # Master Status Summary
+    ESB = 0x00100000, # Event Status Bit
+    MAV = 0x00010000, # Message Available Bit
+    QSS = 0x00001000, # Questionable Summary Status
+    EAV = 0x00000100, # Event Quantity Available
+
+
+def get_commands_three():
+    commands = {}
+    description_node_name = "desc"
+    with open("upper_case_commands.txt", 'r') as file:
+        for line in file:
+            cmd, description = line.split(" ", 1)
+            cmd: str
+
+            cmd_words = cmd.split(":")
+            if cmd_words[0] == "":
+                cmd_words[0] = ":"
+            cmd_words.append(description_node_name)
+
+            current_node = commands
+            for word in cmd_words:
+                if word not in current_node:
+                    if word != description_node_name:
+                        current_node[word] = {}
+                    else:
+                        current_node[word] = description
+                current_node = current_node[word]
+    return commands
+
+
+def send_cmd(a_instr: vxi11.Device, a_cmd: str) -> bool:
     try:
         a_instr.write(a_cmd)
         res = True
@@ -24,19 +59,28 @@ def send_cmd(a_instr: vxi11.Device, a_cmd: str):
     return res
 
 
-def read_answer(a_instr: vxi11.Device):
+def read_answer(a_instr: vxi11.Device, a_encoding='utf-8') -> str:
     try:
-        res = a_instr.read()
+        res = a_instr.read(encoding=a_encoding)
     except vxi11.Vxi11Exception:
         logging.error(f"Не удалось прочитать данные")
         res = ""
     return res
 
 
+def read_raw_answer(a_instr: vxi11.Device) -> bytes:
+    try:
+        res = a_instr.read_raw()
+    except vxi11.Vxi11Exception:
+        logging.error(f"Не удалось прочитать данные")
+        res = bytes()
+    return res
+
+
 def is_operation_completed(a_instr):
     a_instr.write("*ESR?")
     esr = int(a_instr.read())
-    return esr & SesrBit.OPC
+    return esr & SESR.OPC
 
 
 def opc_sync(a_instr):
@@ -44,6 +88,17 @@ def opc_sync(a_instr):
 
     while not is_operation_completed(a_instr):
         time.sleep(1)
+
+
+def are_data_in_queue(a_instr):
+    if send_cmd(a_instr, "*STB?"):
+        try:
+            sbr = int(read_answer(a_instr))
+            return sbr & SBR.MAV
+        except ValueError:
+            return False
+    else:
+        return False
 
 
 def some_test(a_instr):
