@@ -25,17 +25,23 @@ class SBR(IntEnum):
     EAV = 0x00000100, # Event Quantity Available
 
 
-def get_commands_three():
+class CmdCase(IntEnum):
+    UPPER = 0,
+    LOWER = 1
+
+
+def get_commands_three(a_cmd_case: CmdCase):
     commands = {}
     description_node_name = "desc"
-    with open("upper_case_commands.txt", 'r') as file:
+    cmd_file = "upper_case_commands.txt" if a_cmd_case == CmdCase.UPPER else "lower_case_commands.txt"
+    with open(cmd_file, 'r') as file:
         for line in file:
             cmd, description = line.split(" ", 1)
-            cmd: str
 
             cmd_words = cmd.split(":")
             if cmd_words[0] == "":
-                cmd_words[0] = ":"
+                del cmd_words[0]
+                cmd_words[0] = f":{cmd_words[0]}"
             cmd_words.append(description_node_name)
 
             current_node = commands
