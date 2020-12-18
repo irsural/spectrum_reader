@@ -14,6 +14,7 @@ from ui.py.mainwindow import Ui_MainWindow as MainForm
 from about_dialog import AboutDialog
 import settings
 
+from tekvisa_qcompleter import CmdCompleter
 import tekvisa_control as tek
 
 
@@ -26,7 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         try:
-            self.settings = settings.get_clb_autocalibration_settings()
+            self.settings = settings.get_ini_settings()
             ini_ok = True
         except BadIniException:
             ini_ok = False
@@ -46,6 +47,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.graph_widget = pyqtgraph.PlotWidget()
             self.graph_pen = pyqtgraph.mkPen(color=(255, 0, 0), width=2)
             self.init_graph(self.graph_widget)
+
+            self.ui.tip_full_cmd_checkbox.setChecked(self.settings.tip_full_cmd)
+            cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
+            self.cmd_tree = tek.get_commands_three(cmd_case)
+            self.set_completer(self.cmd_tree)
+            print(self.cmd_tree)
 
             self.set_up_logger()
             self.show()
@@ -81,6 +88,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.connect_button.clicked.connect(self.connect_button_clicked)
         self.ui.read_specter_button.clicked.connect(self.read_specter_button_clicked)
 
+        self.ui.tip_full_cmd_checkbox.toggled.connect(self.tip_full_cmd_checkbox_toggled)
+        self.ui.cmd_edit.textChanged.connect(self.cmd_edit_text_changed)
+
+    def set_completer(self, a_cmd_tree: dict):
+        cmd_completer = CmdCompleter(a_cmd_tree, self)
+        cmd_completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        cmd_completer.setModelSorting(QtWidgets.QCompleter.CaseSensitivelySortedModel)
+        self.ui.cmd_edit.setCompleter(cmd_completer)
+
     def set_up_logger(self):
         log = qt_utils.QTextEditLogger(self.ui.log_text_edit)
         log.setFormatter(logging.Formatter('%(asctime)s - %(message)s', datefmt='%H:%M:%S'))
@@ -114,11 +130,38 @@ class MainWindow(QtWidgets.QMainWindow):
                 if answer:
                     self.draw_spectrum(answer)
 
+    def get_cmd_description(self, a_cmd: str) -> str:
+        description = ""
+        if a_cmd:
+            cmd_path = a_cmd.split(":")
+            if cmd_path[0] == "":
+                # Происходит, когда a_cmd начинается с ':'
+                del cmd_path[0]
+
+            if not cmd_path[0].startswith("*"):
+                cmd_path[0] = f":{cmd_path[0]}"
+
+            current_node = self.cmd_tree
+            try:
+                for cmd in cmd_path:
+                    current_node = current_node[cmd]
+                description = current_node["desc"]
+            except KeyError:
+                description = ""
+
+        return description
+
     def send_cmd(self, a_cmd: str, a_read_bytes: bool = False):
-        if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
-            self.lock_interface(True)
-            self.wait_response = True
-            self.read_bytes = a_read_bytes
+        if a_cmd:
+            cmd_description = self.get_cmd_description(a_cmd)
+            if cmd_description:
+                if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
+                    self.lock_interface(True)
+                    self.wait_response = True
+                    self.read_bytes = a_read_bytes
+            else:
+                self.ui.cmd_description_text_edit.clear()
+                self.ui.cmd_description_text_edit.appendPlainText("Неверная команда")
 
     @staticmethod
     def byte_to_char(a_bytes: bytes, a_index: int) -> str:
@@ -162,6 +205,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def read_specter_button_clicked(self):
         self.send_cmd("READ:SPEC?", a_read_bytes=True)
+
+    def tip_full_cmd_checkbox_toggled(self, a_enable):
+        self.settings.tip_full_cmd = int(a_enable)
+
+        cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
+        self.cmd_tree = tek.get_commands_three(cmd_case)
+        self.set_completer(self.cmd_tree)
+
+    def cmd_edit_text_changed(self, a_new_text):
+        self.ui.cmd_description_text_edit.clear()
+        cmd_description = self.get_cmd_description(a_new_text)
+        if cmd_description:
+            self.ui.cmd_description_text_edit.appendPlainText(cmd_description)
 
     def open_about(self):
         about_dialog = AboutDialog(self)

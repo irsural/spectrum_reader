@@ -5,7 +5,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QCompleter
 
 
-class CodeCompleter(QCompleter):
+class CmdCompleter(QCompleter):
     ConcatenationRole = Qt.UserRole + 1
     _separator = ":"
 
@@ -15,31 +15,31 @@ class CodeCompleter(QCompleter):
 
     @staticmethod
     def separator():
-        return CodeCompleter._separator
+        return CmdCompleter._separator
 
     def splitPath(self, path):
-        if path.startswith(CodeCompleter._separator):
-            path_parts = path[1:].split(CodeCompleter._separator)
-            path_parts[0] = f"{CodeCompleter._separator}{path_parts[0]}"
+        if path.startswith(CmdCompleter._separator):
+            path_parts = path[1:].split(CmdCompleter._separator)
+            path_parts[0] = f"{CmdCompleter._separator}{path_parts[0]}"
         else:
-            path_parts = path.split(CodeCompleter._separator)
+            path_parts = path.split(CmdCompleter._separator)
 
         return path_parts
 
     def pathFromIndex(self, index):
         path_parts = []
         while index.isValid():
-            path_parts.insert(0, self.model().data(index, CodeCompleter.ConcatenationRole))
+            path_parts.insert(0, self.model().data(index, CmdCompleter.ConcatenationRole))
             index = index.parent()
 
-        return CodeCompleter._separator.join(path_parts)
+        return CmdCompleter._separator.join(path_parts)
 
     def create_model(self, data):
         def add_items(a_parent_node, elements):
             for text, children in sorted(elements.items()):
                 if text != "desc":
                     item = QStandardItem(text)
-                    item.setData(text, CodeCompleter.ConcatenationRole)
+                    item.setData(text, CmdCompleter.ConcatenationRole)
                     a_parent_node.appendRow(item)
                     if type(children) is dict:
                         add_items(item, children)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             model_data = tek.get_commands_three(tek.CmdCase.UPPER)
 
             self.entry = QLineEdit(self)
-            self.completer = CodeCompleter(model_data, self)
+            self.completer = CmdCompleter(model_data, self)
             self.completer.setCaseSensitivity(Qt.CaseInsensitive)
             self.completer.setModelSorting(QCompleter.CaseSensitivelySortedModel)
             self.entry.setCompleter(self.completer)
