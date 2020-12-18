@@ -7,15 +7,16 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from vxi11 import vxi11
 import pyqtgraph
 
+from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
 from irspy.settings_ini_parser import BadIniException
 from irspy.qt import qt_utils
 
 from ui.py.mainwindow import Ui_MainWindow as MainForm
-from about_dialog import AboutDialog
-import settings
-
 from tekvisa_qcompleter import CmdCompleter
+from MeasureManager import MeasureManager
+from about_dialog import AboutDialog
 import tekvisa_control as tek
+import settings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -37,6 +38,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.settings.restore_qwidget_state(self)
             self.settings.restore_qwidget_state(self.ui.mw_splitter_1)
             self.settings.restore_qwidget_state(self.ui.mw_splitter_2)
+            self.settings.restore_qwidget_state(self.ui.measures_table)
+
+            self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
             self.spec = vxi11.Instrument(self.ui.ip_edit.text())
             self.spec.timeout = 3
@@ -52,7 +56,8 @@ class MainWindow(QtWidgets.QMainWindow):
             cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
             self.cmd_tree = tek.get_commands_three(cmd_case)
             self.set_completer(self.cmd_tree)
-            print(self.cmd_tree)
+
+            self.measure_manager = MeasureManager(self.ui.measures_table)
 
             self.set_up_logger()
             self.show()
@@ -90,6 +95,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.tip_full_cmd_checkbox.toggled.connect(self.tip_full_cmd_checkbox_toggled)
         self.ui.cmd_edit.textChanged.connect(self.cmd_edit_text_changed)
+
+        self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
+        self.ui.add_measure_button.clicked.connect(self.add_measure_button_clicked)
+        self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
+        self.ui.start_measure_button.clicked.connect(self.start_measure_button_clicked)
+        self.ui.stop_measure_button.clicked.connect(self.stop_measure_button_clicked)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -131,6 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.draw_spectrum(answer)
 
     def get_cmd_description(self, a_cmd: str) -> str:
+        print(a_cmd)
         description = ""
         if a_cmd:
             cmd_path = a_cmd.split(":")
@@ -153,7 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_cmd(self, a_cmd: str, a_read_bytes: bool = False):
         if a_cmd:
-            cmd_description = self.get_cmd_description(a_cmd)
+            cmd_description = self.get_cmd_description(a_cmd.split(" ")[0])
             if cmd_description:
                 if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
                     self.lock_interface(True)
@@ -213,17 +225,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cmd_tree = tek.get_commands_three(cmd_case)
         self.set_completer(self.cmd_tree)
 
-    def cmd_edit_text_changed(self, a_new_text):
+    def cmd_edit_text_changed(self, a_cmd: str):
         self.ui.cmd_description_text_edit.clear()
-        cmd_description = self.get_cmd_description(a_new_text)
+        cmd_description = self.get_cmd_description(a_cmd.split(" ")[0])
         if cmd_description:
             self.ui.cmd_description_text_edit.appendPlainText(cmd_description)
+
+    def change_path_button_clicked(self):
+        self.measure_manager.set_measure_path("")
+
+    def add_measure_button_clicked(self):
+        self.measure_manager.new_measure()
+
+    def remove_measure_button_clicked(self):
+        self.measure_manager.remove_measure()
+
+    def start_measure_button_clicked(self):
+        pass
+
+    def stop_measure_button_clicked(self):
+        pass
 
     def open_about(self):
         about_dialog = AboutDialog(self)
         about_dialog.exec()
 
     def closeEvent(self, a_event: QtGui.QCloseEvent):
+        self.settings.save_qwidget_state(self.ui.measures_table)
         self.settings.save_qwidget_state(self.ui.mw_splitter_2)
         self.settings.save_qwidget_state(self.ui.mw_splitter_1)
         self.settings.save_qwidget_state(self)
