@@ -1,10 +1,7 @@
 from logging.handlers import RotatingFileHandler
-from typing import Tuple
 import logging
-import struct
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from vxi11 import vxi11
 import pyqtgraph
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
@@ -12,6 +9,7 @@ from irspy.settings_ini_parser import BadIniException
 from irspy.qt import qt_utils
 
 from ui.py.mainwindow import Ui_MainWindow as MainForm
+from TektronixController import TektronixController
 from tekvisa_qcompleter import CmdCompleter
 from MeasureManager import MeasureManager
 from about_dialog import AboutDialog
@@ -40,19 +38,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.settings.restore_qwidget_state(self.ui.mw_splitter_2)
             self.settings.restore_qwidget_state(self.ui.measures_table)
 
+            self.set_up_logger()
+
             self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
             self.ui.ip_edit.setText(self.settings.device_ip)
 
-            self.spec = vxi11.Instrument(self.ui.ip_edit.text())
-            self.spec.timeout = 3
-
-            self.wait_response = False
-            self.read_bytes = False
-
             self.graph_widget = pyqtgraph.PlotWidget()
-            self.graph_pen = pyqtgraph.mkPen(color=(255, 0, 0), width=2)
             self.init_graph(self.graph_widget)
 
             self.ui.tip_full_cmd_checkbox.setChecked(self.settings.tip_full_cmd)
@@ -60,9 +53,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cmd_tree = tek.get_commands_three(cmd_case)
             self.set_completer(self.cmd_tree)
 
+            self.tektronix_controller = TektronixController(self.graph_widget, self.cmd_tree)
+            self.tektronix_controller.connect(self.settings.device_ip)
+
             self.measure_manager = MeasureManager(self.cmd_tree, self.ui.measures_table, self.settings)
 
-            self.set_up_logger()
             self.show()
             self.connect_all()
 
@@ -131,74 +126,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.error_buttons.setDisabled(a_lock)
 
     def tick(self):
-        if self.wait_response:
+        self.tektronix_controller.tick()
+
+        if not self.tektronix_controller.wait_response():
             self.lock_interface(False)
-            self.wait_response = False
-
-            if not self.read_bytes:
-                answer = tek.read_answer(self.spec)
-                if answer:
-                    logging.info(answer)
-            else:
-                answer = tek.read_raw_answer(self.spec)
-                if answer:
-                    self.draw_spectrum(answer)
-
-    def send_cmd(self, a_cmd: str, a_read_bytes: bool = False):
-        if a_cmd:
-            cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
-            if cmd_description:
-                if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
-                    self.lock_interface(True)
-                    self.wait_response = True
-                    self.read_bytes = a_read_bytes
-            else:
-                self.ui.cmd_description_text_edit.clear()
-                self.ui.cmd_description_text_edit.appendPlainText("Неверная команда")
-
-    @staticmethod
-    def byte_to_char(a_bytes: bytes, a_index: int) -> str:
-        return str(a_bytes[a_index:a_index + 1], encoding="ascii")
-
-    def get_spectrum_data_length(self, a_data: bytes) -> Tuple[int, int]:
-        digits_num = int(self.byte_to_char(a_data, 1))
-        data_length = ""
-        for i in range(2, 2 + digits_num):
-            data_length += self.byte_to_char(a_data, i)
-        return int(data_length), i + 1
-
-    def draw_spectrum(self, a_data: bytes):
-        if self.byte_to_char(a_data, 0) == '#':
-            data_length, first_data_byte = self.get_spectrum_data_length(a_data)
-
-            float_bytes = 4
-            float_data = []
-            for i in range(first_data_byte, len(a_data) - 1, float_bytes):
-                sample = struct.unpack('f', a_data[i:i + float_bytes])[0]
-                float_data.append(sample)
-
-            self.graph_widget.plotItem.clear()
-            self.graph_widget.plot(list(range(len(float_data))), float_data, pen=self.graph_pen, name="Спектр")
-        else:
-            logging.error("Неверные данные")
 
     def connect_button_clicked(self):
         self.settings.device_ip = self.ui.ip_edit.text()
-        self.spec = vxi11.Instrument(self.ui.ip_edit.text())
-        self.spec.timeout = 3
-        logging.debug("Connected")
+        self.tektronix_controller.connect(self.ui.ip_edit.text())
 
     def send_button_clicked(self):
-        self.send_cmd(self.ui.cmd_edit.text())
+        if self.tektronix_controller.send_cmd(self.ui.cmd_edit.text()):
+            self.lock_interface(True)
 
     def idn_button_clicked(self):
-        self.send_cmd("*IDN?")
+        if self.tektronix_controller.send_cmd("*IDN?"):
+            self.lock_interface(True)
 
     def errors_button_clicked(self):
-        self.send_cmd("SYST:ERR:ALL?")
+        if self.tektronix_controller.send_cmd("SYST:ERR:ALL?"):
+            self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        self.send_cmd("READ:SPEC?", a_read_bytes=True)
+        if self.tektronix_controller.send_cmd("READ:SPEC?", True):
+            self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
         self.settings.tip_full_cmd = int(a_enable)

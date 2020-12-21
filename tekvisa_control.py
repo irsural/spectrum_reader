@@ -118,17 +118,6 @@ def opc_sync(a_instr):
         time.sleep(1)
 
 
-def are_data_in_queue(a_instr):
-    if send_cmd(a_instr, "*STB?"):
-        try:
-            sbr = int(read_answer(a_instr))
-            return sbr & SBR.MAV
-        except ValueError:
-            return False
-    else:
-        return False
-
-
 def some_test(a_instr):
     a_instr.write("*CLS")
     a_instr.write("*ESE 1")
