@@ -55,6 +55,28 @@ def get_commands_three(a_cmd_case: CmdCase):
     return commands
 
 
+def get_cmd_description(a_cmd: str, a_cmd_tree: dict) -> str:
+    description = ""
+    if a_cmd:
+        cmd_path = a_cmd.split(":")
+        if cmd_path[0] == "":
+            # Происходит, когда a_cmd начинается с ':'
+            del cmd_path[0]
+
+        if not cmd_path[0].startswith("*"):
+            cmd_path[0] = f":{cmd_path[0]}"
+
+        current_node = a_cmd_tree
+        try:
+            for cmd in cmd_path:
+                current_node = current_node[cmd]
+            description = current_node["desc"]
+        except KeyError:
+            description = ""
+
+    return description
+
+
 def send_cmd(a_instr: vxi11.Device, a_cmd: str) -> bool:
     try:
         a_instr.write(a_cmd)

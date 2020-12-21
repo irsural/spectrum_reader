@@ -42,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
+            self.ui.measure_path_edit.setText(self.settings.save_folder_path)
+
             self.spec = vxi11.Instrument(self.ui.ip_edit.text())
             self.spec.timeout = 3
 
@@ -57,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cmd_tree = tek.get_commands_three(cmd_case)
             self.set_completer(self.cmd_tree)
 
-            self.measure_manager = MeasureManager(self.ui.measures_table)
+            self.measure_manager = MeasureManager(self.cmd_tree, self.ui.measures_table, self.settings)
 
             self.set_up_logger()
             self.show()
@@ -141,31 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 if answer:
                     self.draw_spectrum(answer)
 
-    def get_cmd_description(self, a_cmd: str) -> str:
-        print(a_cmd)
-        description = ""
-        if a_cmd:
-            cmd_path = a_cmd.split(":")
-            if cmd_path[0] == "":
-                # Происходит, когда a_cmd начинается с ':'
-                del cmd_path[0]
-
-            if not cmd_path[0].startswith("*"):
-                cmd_path[0] = f":{cmd_path[0]}"
-
-            current_node = self.cmd_tree
-            try:
-                for cmd in cmd_path:
-                    current_node = current_node[cmd]
-                description = current_node["desc"]
-            except KeyError:
-                description = ""
-
-        return description
-
     def send_cmd(self, a_cmd: str, a_read_bytes: bool = False):
         if a_cmd:
-            cmd_description = self.get_cmd_description(a_cmd.split(" ")[0])
+            cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
             if cmd_description:
                 if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
                     self.lock_interface(True)
@@ -224,15 +204,21 @@ class MainWindow(QtWidgets.QMainWindow):
         cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
         self.cmd_tree = tek.get_commands_three(cmd_case)
         self.set_completer(self.cmd_tree)
+        self.measure_manager.update_cmd_tree(self.cmd_tree)
 
     def cmd_edit_text_changed(self, a_cmd: str):
         self.ui.cmd_description_text_edit.clear()
-        cmd_description = self.get_cmd_description(a_cmd.split(" ")[0])
+        cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
         if cmd_description:
             self.ui.cmd_description_text_edit.appendPlainText(cmd_description)
+            self.ui.cmd_description_text_edit.verticalScrollBar().setValue(0)
 
     def change_path_button_clicked(self):
-        self.measure_manager.set_measure_path("")
+        save_folder_path = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "Выберите каталог для сохренения результатов", self.settings.save_folder_path)
+        if save_folder_path:
+            self.settings.save_folder_path = save_folder_path
+            self.ui.measure_path_edit.setText(save_folder_path)
 
     def add_measure_button_clicked(self):
         self.measure_manager.new_measure()

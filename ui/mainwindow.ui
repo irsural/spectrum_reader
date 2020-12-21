@@ -78,12 +78,107 @@
          <property name="leftMargin">
           <number>3</number>
          </property>
+         <property name="topMargin">
+          <number>3</number>
+         </property>
+         <property name="bottomMargin">
+          <number>3</number>
+         </property>
          <item>
           <layout class="QGridLayout" name="gridLayout_2">
            <property name="leftMargin">
             <number>3</number>
            </property>
-           <item row="2" column="0">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Описание команды</string>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="0">
+            <widget class="QLineEdit" name="cmd_edit"/>
+           </item>
+           <item row="8" column="1">
+            <widget class="QPushButton" name="send_cmd_button">
+             <property name="text">
+              <string>Отправить</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="connect_button">
+             <property name="text">
+              <string>Подключиться</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLineEdit" name="ip_edit">
+             <property name="text">
+              <string>192.168.0.91</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="Line" name="line_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>IP</string>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <widget class="QPushButton" name="idn_button">
+               <property name="text">
+                <string>*IDN?</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="error_buttons">
+               <property name="text">
+                <string>Ошибки</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="read_specter_button">
+               <property name="text">
+                <string>Спектр</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="4" column="0" rowspan="3" colspan="2">
+            <widget class="QPlainTextEdit" name="cmd_description_text_edit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>60</height>
+              </size>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0" colspan="2">
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
               <widget class="QLabel" name="label">
@@ -100,78 +195,6 @@
               </widget>
              </item>
             </layout>
-           </item>
-           <item row="5" column="1">
-            <widget class="QPushButton" name="idn_button">
-             <property name="text">
-              <string>*IDN?</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1">
-            <widget class="QPushButton" name="read_specter_button">
-             <property name="text">
-              <string>Спектр</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="connect_button">
-             <property name="text">
-              <string>Подключиться</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>IP</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLineEdit" name="cmd_edit"/>
-           </item>
-           <item row="6" column="1">
-            <widget class="QPushButton" name="error_buttons">
-             <property name="text">
-              <string>Ошибки</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QPushButton" name="send_cmd_button">
-             <property name="text">
-              <string>Отправить</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>Описание команды</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLineEdit" name="ip_edit">
-             <property name="text">
-              <string>192.168.0.91</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0" rowspan="3">
-            <widget class="QPlainTextEdit" name="cmd_description_text_edit">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
            </item>
           </layout>
          </item>
@@ -212,7 +235,7 @@
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                  <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
+                 <verstretch>1</verstretch>
                 </sizepolicy>
                </property>
                <property name="selectionMode">
