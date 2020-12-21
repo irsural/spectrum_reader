@@ -9,9 +9,39 @@ from tekvisa_qcompleter import CmdCompleter
 import tekvisa_control as tek
 
 
+class TekConfig:
+    def __init__(self, a_cmd_list=None, a_enable=False):
+        self._cmd_list = [] if a_cmd_list is None else a_cmd_list
+        self._enable = a_enable
+
+    def cmd_list(self):
+        return self._cmd_list
+
+    def set_cmd_list(self, a_cmd_list: list):
+        self._cmd_list = a_cmd_list
+
+    def is_enabled(self):
+        return self._enable
+
+    def enable(self, a_enable: bool):
+        self._enable = a_enable
+
+    def to_dict(self):
+        return {
+            "cmd_list": self._cmd_list,
+            "enable": self._enable
+        }
+
+    @classmethod
+    def from_dict(cls, a_dict: dict):
+        cmd_list = a_dict["cmd_list"]
+        enable = a_dict["enable"]
+        return cls(cmd_list, enable)
+
+
 class ConfigDialog(QtWidgets.QDialog):
 
-    def __init__(self, a_cmd_tree: dict, a_settings: QtSettings, a_parent=None):
+    def __init__(self, a_config: TekConfig, a_cmd_tree: dict, a_settings: QtSettings, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.ui = ConfigForm()
@@ -22,6 +52,9 @@ class ConfigDialog(QtWidgets.QDialog):
         self.settings.restore_qwidget_state(self)
 
         self.cmd_tree = a_cmd_tree
+
+        for cmd in a_config.cmd_list():
+            self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(cmd))
 
         cmd_completer = CmdCompleter(a_cmd_tree, self)
         cmd_completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
@@ -68,6 +101,9 @@ class ConfigDialog(QtWidgets.QDialog):
             config_data = json.dumps(cmd_list, indent=4)
             with open(filename, "w") as file:
                 file.write(config_data)
+
+    def get_cmd_list(self):
+        return [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
 
     def __del__(self):
         print("ConfigDialog deleted")

@@ -81,7 +81,7 @@ def send_cmd(a_instr: vxi11.Device, a_cmd: str) -> bool:
     try:
         a_instr.write(a_cmd)
         res = True
-    except vxi11.Vxi11Exception:
+    except (vxi11.Vxi11Exception, TimeoutError):
         logging.error(f"Не удалось записать команду {a_cmd}")
         res = False
     return res

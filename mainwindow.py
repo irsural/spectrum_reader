@@ -43,6 +43,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
+            self.ui.ip_edit.setText(self.settings.device_ip)
 
             self.spec = vxi11.Instrument(self.ui.ip_edit.text())
             self.spec.timeout = 3
@@ -182,6 +183,7 @@ class MainWindow(QtWidgets.QMainWindow):
             logging.error("Неверные данные")
 
     def connect_button_clicked(self):
+        self.settings.device_ip = self.ui.ip_edit.text()
         self.spec = vxi11.Instrument(self.ui.ip_edit.text())
         self.spec.timeout = 3
         logging.debug("Connected")

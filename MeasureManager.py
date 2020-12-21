@@ -1,6 +1,7 @@
 from typing import Union, Dict, List, Tuple
 from enum import IntEnum
 import logging
+import json
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -8,21 +9,12 @@ from irspy.built_in_extensions import OrderedDictInsert
 from irspy.qt import qt_utils
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
-from config_dialog import ConfigDialog
-
-
-class ConfigTmp:
-    def __init__(self):
-        self._enable = False
-
-    def is_enabled(self):
-        return self._enable
-
-    def enable(self, a_enable: bool):
-        self._enable = a_enable
+from config_dialog import ConfigDialog, TekConfig
 
 
 class MeasureManager(QtCore.QObject):
+    CURRENT_CONFIG_FILENAME = "current_config.json"
+
     class MeasureColumn(IntEnum):
         NAME = 0,
         SETTINGS = 1,
@@ -36,7 +28,9 @@ class MeasureManager(QtCore.QObject):
         self.settings = a_settings
 
         self.cmd_tree = a_cmd_tree
-        self.measures: Dict[str, ConfigTmp] = OrderedDictInsert()
+        self.measures: Dict[str, TekConfig] = OrderedDictInsert()
+
+        self.open_config()
 
         self.measure_name_before_rename = ""
 
@@ -76,15 +70,16 @@ class MeasureManager(QtCore.QObject):
         cb.setChecked(a_enabled)
         cb.toggled.connect(self.enable_measure_checkbox_toggled)
 
-    def new_measure(self, a_name="", a_measure_config: ConfigTmp = None):
+    def new_measure(self, a_name="", a_measure_config: TekConfig = None):
         selected_row = qt_utils.get_selected_row(self.measures_table)
         row_index = selected_row + 1 if selected_row is not None else self.measures_table.rowCount()
 
         new_name = a_name if a_name else self.__get_allowable_name(self.__get_measures_list(), "Измерение")
 
-        measure_config = a_measure_config if a_measure_config else ConfigTmp()
+        measure_config = a_measure_config if a_measure_config else TekConfig()
         self.measures.insert(row_index, new_name, measure_config)
         self.add_measure_in_table(row_index, new_name, measure_config.is_enabled())
+        self.save_config()
 
     def remove_measure(self):
         selected_row = qt_utils.get_selected_row(self.measures_table)
@@ -98,6 +93,18 @@ class MeasureManager(QtCore.QObject):
             if res == QtWidgets.QMessageBox.Yes:
                 self.measures_table.removeRow(selected_row)
                 del self.measures[removed_name]
+                self.save_config()
+
+    def save_config(self):
+        with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'w') as config_file:
+            json_data = {measure: config.to_dict() for measure, config in self.measures.items()}
+            config_file.write(json.dumps(json_data, indent=4))
+
+    def open_config(self):
+        with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'r') as config_file:
+            config: dict = json.loads(config_file.read())
+            for measure, measure_config in config.items():
+                self.new_measure(measure, TekConfig.from_dict(measure_config))
 
     def change_measure_name_started(self, a_item: QtWidgets.QTableWidgetItem):
         if a_item.column() == MeasureManager.MeasureColumn.NAME:
@@ -111,14 +118,28 @@ class MeasureManager(QtCore.QObject):
                     config = self.measures[self.measure_name_before_rename]
                     del self.measures[self.measure_name_before_rename]
                     self.measures.insert(a_item.row(), a_item.text(), config)
+                    self.save_config()
                 else:
                     a_item.setText(self.measure_name_before_rename)
 
                 self.measure_name_before_rename = ""
 
     def edit_measure_parameters_button_clicked(self):
-        config_dialog = ConfigDialog(self.cmd_tree, self.settings, self.parent())
-        config_dialog.exec()
+        sender_button: QtWidgets.QPushButton = self.sender()
+        for row in range(self.measures_table.rowCount()):
+            cell_widget = self.measures_table.cellWidget(row, MeasureManager.MeasureColumn.SETTINGS)
+            settings_button = qt_utils.unwrap_from_layout(cell_widget)
+            if sender_button == settings_button:
+                measure_name = self.measures_table.item(row, MeasureManager.MeasureColumn.NAME).text()
+                config = self.measures[measure_name]
+                break
+        else:
+            assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
+
+        config_dialog = ConfigDialog(config, self.cmd_tree, self.settings, self.parent())
+        if config_dialog.exec() == QtWidgets.QDialog.Accepted:
+            self.measures[measure_name].set_cmd_list(config_dialog.get_cmd_list())
+            self.save_config()
 
     def enable_measure_checkbox_toggled(self, a_state: bool):
         checkbox: QtWidgets.QPushButton = self.sender()

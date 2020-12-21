@@ -6,6 +6,7 @@
 *.ini
 *.log*
 icons_rc.py
+current_config.json
 /build
 /venv
 /venv3.5

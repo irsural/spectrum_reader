@@ -67,6 +67,8 @@ class Ui_config_dialog(object):
         self.cmd_edit.setObjectName("cmd_edit")
         self.verticalLayout.addWidget(self.cmd_edit)
         self.cmd_list_widget = QtWidgets.QListWidget(config_dialog)
+        self.cmd_list_widget.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.cmd_list_widget.setDefaultDropAction(QtCore.Qt.MoveAction)
         self.cmd_list_widget.setObjectName("cmd_list_widget")
         self.verticalLayout.addWidget(self.cmd_list_widget)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()

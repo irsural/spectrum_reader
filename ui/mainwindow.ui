@@ -312,12 +312,20 @@
                <property name="text">
                 <string>Старт</string>
                </property>
+               <property name="icon">
+                <iconset resource="../../irspy/qt/resources/icons.qrc">
+                 <normaloff>:/icons/icons/play.png</normaloff>:/icons/icons/play.png</iconset>
+               </property>
               </widget>
              </item>
              <item>
               <widget class="QPushButton" name="stop_measure_button">
                <property name="text">
                 <string>Стоп</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../irspy/qt/resources/icons.qrc">
+                 <normaloff>:/icons/icons/stop.png</normaloff>:/icons/icons/stop.png</iconset>
                </property>
               </widget>
              </item>
