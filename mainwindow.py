@@ -76,7 +76,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                                            QtWidgets.QSizePolicy.Preferred))
         a_graph_widget.setSizeIncrement(1, 1)
         a_graph_widget.setBackground('w')
-        a_graph_widget.setLabel('bottom', 'Частота, МГц', color='black', size=20)
+        a_graph_widget.setLabel('bottom', 'Частота, Гц', color='black', size=20)
         a_graph_widget.setLabel('left', 'Амплитуда, dBm', color='black', size=20)
         a_graph_widget.showGrid(x=True, y=True)
         a_graph_widget.plotItem.getViewBox().setMouseMode(pyqtgraph.ViewBox.RectMode)

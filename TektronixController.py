@@ -2,15 +2,30 @@ from typing import Optional, Tuple, List
 from collections import deque
 from enum import IntEnum
 import logging
+from decimal import Decimal
 import struct
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from pyqtgraph import PlotWidget, mkPen
 from vxi11 import vxi11
 
-from irspy.utils import Timer
+from irspy.utils import Timer, value_to_user_with_units
 
 import tekvisa_control as tek
+
+
+class SpecterParameters:
+    def __init__(self):
+        # Все параметры в Гц
+        self.x_start = 0
+        self.x_stop = 0
+
+        self.y_start = 0
+        self.y_stop = 0
+
+        self.center = 0
+        self.span = 0
+        self.rbw = 0
 
 
 class TektronixController(QtCore.QObject):
@@ -42,6 +57,8 @@ class TektronixController(QtCore.QObject):
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
 
+        self.convert_hz = value_to_user_with_units("Гц")
+
     def reset(self):
         self.started = False
         self.current_commands = []
@@ -54,6 +71,9 @@ class TektronixController(QtCore.QObject):
         self.spec = vxi11.Instrument(a_ip)
         self.spec.timeout = 3
         logging.debug("Connected")
+
+    def abort_tektronix(self):
+        self.send_cmd(":ABOR")
 
     def handle_measure_error(self, a_error_msg):
         logging.error("Во время измерения произошла ошибка, измерение будет остановлено")
@@ -69,6 +89,21 @@ class TektronixController(QtCore.QObject):
         if len(cmd_param) > 1:
             param = cmd_param[1]
         return cmd, param
+
+    def get_specter_parameters(self) -> SpecterParameters:
+        spec_params = SpecterParameters()
+
+        spec_params.y_start = float(self.spec.ask(":DISP:SPEC:Y:OFFS?"))
+        spec_params.y_stop = spec_params.y_start + 10 * float(self.spec.ask(":DISP:SPEC:Y:PDIV?"))
+
+        spec_params.x_start = float(self.spec.ask(":DISP:SPEC:X:OFFS?"))
+        spec_params.x_stop = spec_params.x_start + 10 * float(self.spec.ask(":DISP:SPEC:X:PDIV?"))
+
+        spec_params.center = float(self.spec.ask(":FREQ:CENT?"))
+        spec_params.span = float(self.spec.ask(":FREQ:SPAN?"))
+        spec_params.rbw = float(self.spec.ask(":SPEC:BAND?"))
+
+        return spec_params
 
     def tick(self):
         if self.started:
@@ -103,8 +138,9 @@ class TektronixController(QtCore.QObject):
 
                             elif cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
                                 binary_spectrum = tek.read_raw_answer(self.spec)
+
                                 if binary_spectrum:
-                                    self.draw_spectrum(binary_spectrum)
+                                    self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
 
                             elif "?" in cmd:
                                 self.tek_status = self.TekStatus.WAIT_RESPONSE
@@ -148,27 +184,41 @@ class TektronixController(QtCore.QObject):
     def byte_to_char(a_bytes: bytes, a_index: int) -> str:
         return str(a_bytes[a_index:a_index + 1], encoding="ascii")
 
-    def get_spectrum_data_length(self, a_data: bytes) -> Tuple[int, int]:
+    def extract_spectrum_data(self, a_data: bytes) -> List[float]:
         digits_num = int(self.byte_to_char(a_data, 1))
         data_length = ""
         for i in range(2, 2 + digits_num):
             data_length += self.byte_to_char(a_data, i)
-        return int(data_length), i + 1
+        first_data_byte = i + 1
 
-    def draw_spectrum(self, a_data: bytes):
+        float_bytes = 4
+        float_data = []
+        for i in range(first_data_byte, len(a_data) - 1, float_bytes):
+            sample = struct.unpack('f', a_data[i:i + float_bytes])[0]
+            float_data.append(sample)
+
+        return float_data
+
+    def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters):
         if self.byte_to_char(a_data, 0) == '#':
-            data_length, first_data_byte = self.get_spectrum_data_length(a_data)
+            spec_data = self.extract_spectrum_data(a_data)
 
-            float_bytes = 4
-            float_data = []
-            for i in range(first_data_byte, len(a_data) - 1, float_bytes):
-                sample = struct.unpack('f', a_data[i:i + float_bytes])[0]
-                float_data.append(sample)
+            x_discrete = Decimal(a_spec_params.x_stop - a_spec_params.x_start) / (len(spec_data) - 1)
+            x_points = [a_spec_params.x_start]
+            decimal_sum = Decimal(a_spec_params.x_start)
+            for _ in range(len(spec_data) - 1):
+                decimal_sum += x_discrete
+                x_points.append(float(decimal_sum))
+
+            graph_name = f"Центр: {self.convert_hz(a_spec_params.center)}, " \
+                         f"Span: {self.convert_hz(a_spec_params.span)}, " \
+                         f"RBW: {self.convert_hz(a_spec_params.rbw)}"
 
             self.graph_widget.plotItem.clear()
-            self.graph_widget.plot(list(range(len(float_data))), float_data, pen=self.graph_pen, name="Спектр")
+            self.graph_widget.plot(x_points, spec_data, pen=self.graph_pen, name=graph_name)
+            self.graph_widget.setYRange(a_spec_params.y_start, a_spec_params.y_stop)
         else:
-            logging.error("Неверные данные")
+            logging.error("Неверные данные для построения графика спектра")
 
     def get_next_cmd_deque(self):
         for cmd_list in self.current_commands:
