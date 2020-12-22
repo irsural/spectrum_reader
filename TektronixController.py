@@ -1,12 +1,13 @@
 from typing import Optional, Tuple, List
 from collections import deque
+from decimal import Decimal
 from enum import IntEnum
 import logging
-from decimal import Decimal
 import struct
+import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from pyqtgraph import PlotWidget, mkPen
+from pyqtgraph import PlotWidget, mkPen, exporters
 from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
@@ -56,6 +57,7 @@ class TektronixController(QtCore.QObject):
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
+        self.save_folder = ""
 
         self.convert_hz = value_to_user_with_units("Гц")
 
@@ -66,6 +68,7 @@ class TektronixController(QtCore.QObject):
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
+        self.save_folder = ""
 
     def connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -210,13 +213,15 @@ class TektronixController(QtCore.QObject):
                 decimal_sum += x_discrete
                 x_points.append(float(decimal_sum))
 
-            graph_name = f"Центр: {self.convert_hz(a_spec_params.center)}, " \
-                         f"Span: {self.convert_hz(a_spec_params.span)}, " \
-                         f"RBW: {self.convert_hz(a_spec_params.rbw)}"
+            graph_name = f"Центр {self.convert_hz(a_spec_params.center)}, " \
+                         f"Span {self.convert_hz(a_spec_params.span)}, " \
+                         f"RBW {self.convert_hz(a_spec_params.rbw)}"
 
             self.graph_widget.plotItem.clear()
             self.graph_widget.plot(x_points, spec_data, pen=self.graph_pen, name=graph_name)
             self.graph_widget.setYRange(a_spec_params.y_start, a_spec_params.y_stop)
+
+            self.save_results(graph_name, x_points, spec_data)
         else:
             logging.error("Неверные данные для построения графика спектра")
 
@@ -226,13 +231,28 @@ class TektronixController(QtCore.QObject):
             cmd_deque.reverse()
             yield cmd_deque
 
-    def start(self, a_cmd_list: List[list]):
+    def save_results(self, a_filename, a_x_data, a_y_data):
+        if self.save_folder:
+            png_filename = f"{self.save_folder}/{a_filename}.png"
+            csv_filename = f"{self.save_folder}/{a_filename}.csv"
+
+            exporter = exporters.ImageExporter(self.graph_widget.plotItem)
+            exporter.parameters()['width'] = 1e3
+            exporter.export(png_filename)
+
+            csv_data = zip(a_x_data, a_y_data)
+            with open(csv_filename, 'w', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerows(csv_data)
+
+    def start(self, a_cmd_list: List[list], a_save_folder=""):
         if a_cmd_list and a_cmd_list[0]:
             self.current_commands = a_cmd_list
             self.cmd_queue_gen = self.get_next_cmd_deque()
             self.current_cmd_queue = next(self.cmd_queue_gen)
             self.wait_timer.start(0)
             self.tek_status = self.TekStatus.READY
+            self.save_folder = a_save_folder
 
             self.started = True
         return self.started
