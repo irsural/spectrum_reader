@@ -14,14 +14,16 @@ import tekvisa_control as tek
 
 
 class TektronixController(QtCore.QObject):
+    # Для автоматического режима
     class TekStatus(IntEnum):
         READY = 0
-        WAIT_STRING = 1
-        WAIT_BYTES = 2
+        WAIT_RESPONSE = 1
+        WAIT_OPC = 2
 
     tektronix_is_ready = QtCore.pyqtSignal()
 
     DEFAULT_CMD_DELAY_S = 0
+    OPC_POLL_DELAY_S = 1
 
     def __init__(self, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
@@ -34,23 +36,19 @@ class TektronixController(QtCore.QObject):
         self.cmd_tree = a_cmd_tree
 
         self.started = False
-        self.tek_status = self.TekStatus.READY
-
         self.current_commands = []
         self.cmd_queue_gen = None
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
-        self.wait_response = False
+        self.tek_status = self.TekStatus.READY
 
     def reset(self):
         self.started = False
-        self.tek_status = self.TekStatus.READY
-
         self.current_commands = []
         self.cmd_queue_gen = None
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
-        self.wait_response = False
+        self.tek_status = self.TekStatus.READY
 
     def connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -73,25 +71,17 @@ class TektronixController(QtCore.QObject):
         return cmd, param
 
     def tick(self):
-        if self.tek_status != self.TekStatus.READY:
-            if self.tek_status == self.TekStatus.WAIT_STRING:
-                answer = tek.read_answer(self.spec)
-                if answer:
-                    logging.info(answer)
-            else:
-                answer = tek.read_raw_answer(self.spec)
-                if answer:
-                    self.draw_spectrum(answer)
-
-            self.tek_status = self.TekStatus.READY
-            self.tektronix_is_ready.emit()
-
         if self.started:
             if self.wait_timer.check():
-                if self.wait_response:
-                    self.wait_response = False
+                if self.tek_status == self.TekStatus.WAIT_RESPONSE:
+                    self.tek_status = self.TekStatus.READY
                     answer = tek.read_answer(self.spec)
                     logging.info(f'Read result - "{answer}"')
+                elif self.tek_status == self.TekStatus.WAIT_OPC:
+                    if tek.is_operation_completed(self.spec):
+                        self.tek_status = self.TekStatus.READY
+                    else:
+                        self.wait_timer.start(self.OPC_POLL_DELAY_S)
                 else:
                     if self.current_cmd_queue:
                         current_cmd = self.current_cmd_queue.pop()
@@ -108,13 +98,16 @@ class TektronixController(QtCore.QObject):
 
                         else:
                             tek.send_cmd(self.spec, current_cmd)
+                            if cmd == "*OPC":
+                                self.tek_status = self.TekStatus.WAIT_OPC
 
-                            if cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
+                            elif cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
                                 binary_spectrum = tek.read_raw_answer(self.spec)
                                 if binary_spectrum:
                                     self.draw_spectrum(binary_spectrum)
+
                             elif "?" in cmd:
-                                self.wait_response = True
+                                self.tek_status = self.TekStatus.WAIT_RESPONSE
 
                                 if self.current_cmd_queue:
                                     next_cmd, next_param = self.parse_cmd(self.current_cmd_queue[-1])
@@ -189,7 +182,7 @@ class TektronixController(QtCore.QObject):
             self.cmd_queue_gen = self.get_next_cmd_deque()
             self.current_cmd_queue = next(self.cmd_queue_gen)
             self.wait_timer.start(0)
-            self.wait_response = False
+            self.tek_status = self.TekStatus.READY
 
             self.started = True
         return self.started

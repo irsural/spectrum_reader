@@ -146,19 +146,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tektronix_controller.connect(self.ui.ip_edit.text())
 
     def send_button_clicked(self):
-        if self.tektronix_controller.send_cmd(self.ui.cmd_edit.text()):
+        if self.tektronix_controller.start([[self.ui.cmd_edit.text()]]):
             self.lock_interface(True)
 
     def idn_button_clicked(self):
-        if self.tektronix_controller.send_cmd("*IDN?"):
+        if self.tektronix_controller.start([["*IDN?"]]):
             self.lock_interface(True)
 
     def errors_button_clicked(self):
-        if self.tektronix_controller.send_cmd("SYST:ERR:ALL?"):
+        if self.tektronix_controller.start([[":SYST:ERR:ALL?"]]):
             self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        if self.tektronix_controller.send_cmd("READ:SPEC?", True):
+        if self.tektronix_controller.start([[":READ:SPEC?"]]):
             self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
