@@ -6,6 +6,7 @@ import pyqtgraph
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
 from irspy.settings_ini_parser import BadIniException
+from irspy.utils import exception_decorator
 from irspy.qt import qt_utils
 
 from ui.py.mainwindow import Ui_MainWindow as MainForm
@@ -55,6 +56,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.tektronix_controller = TektronixController(self.graph_widget, self.cmd_tree)
             self.tektronix_controller.connect(self.settings.device_ip)
+            self.tektronix_controller.tektronix_is_ready.connect(self.tektronix_is_ready)
 
             self.measure_manager = MeasureManager(self.cmd_tree, self.ui.measures_table, self.settings)
 
@@ -120,16 +122,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def lock_interface(self, a_lock: bool):
         self.ui.connect_button.setDisabled(a_lock)
-
+        self.ui.tip_full_cmd_checkbox.setDisabled(a_lock)
         self.ui.send_cmd_button.setDisabled(a_lock)
         self.ui.idn_button.setDisabled(a_lock)
         self.ui.error_buttons.setDisabled(a_lock)
+        self.ui.read_specter_button.setDisabled(a_lock)
 
+        self.ui.change_path_button.setDisabled(a_lock)
+        self.ui.add_measure_button.setDisabled(a_lock)
+        self.ui.remove_measure_button.setDisabled(a_lock)
+
+        self.ui.start_measure_button.setDisabled(a_lock)
+
+    def tektronix_is_ready(self):
+        self.lock_interface(False)
+
+    @exception_decorator
     def tick(self):
         self.tektronix_controller.tick()
-
-        if not self.tektronix_controller.wait_response():
-            self.lock_interface(False)
 
     def connect_button_clicked(self):
         self.settings.device_ip = self.ui.ip_edit.text()
@@ -180,10 +190,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.measure_manager.remove_measure()
 
     def start_measure_button_clicked(self):
-        pass
+        cmd_list = self.measure_manager.get_enabled_configs()
+        if self.tektronix_controller.start(cmd_list):
+            self.lock_interface(True)
 
     def stop_measure_button_clicked(self):
-        pass
+        self.tektronix_controller.stop()
+        self.lock_interface(False)
 
     def open_about(self):
         about_dialog = AboutDialog(self)

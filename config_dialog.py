@@ -66,6 +66,8 @@ class ConfigDialog(QtWidgets.QDialog):
         self.ui.load_from_file_button.clicked.connect(self.load_from_file_button_clicked)
         self.ui.save_to_file_button.clicked.connect(self.save_to_file_button_clicked)
 
+        self.ui.cmd_list_widget.currentItemChanged.connect(self.current_list_item_changed)
+
         self.ui.ok_button.clicked.connect(self.accept)
         self.ui.cancel_button.clicked.connect(self.reject)
 
@@ -73,9 +75,11 @@ class ConfigDialog(QtWidgets.QDialog):
         cmd = self.ui.cmd_edit.text()
         if cmd:
             cmd_description = tek.get_cmd_description(cmd.split(" ")[0], self.cmd_tree)
-            if cmd_description:
+            if cmd_description or cmd.split(" ")[0] in (tek.SpecCmd.WAIT, tek.SpecCmd.READ_DELAY):
                 item = QtWidgets.QListWidgetItem(cmd)
                 self.ui.cmd_list_widget.insertItem(self.ui.cmd_list_widget.currentRow() + 1, item)
+                self.ui.cmd_list_widget.setCurrentItem(item)
+                self.ui.cmd_edit.clear()
             else:
                 QtWidgets.QMessageBox.critical(self, "Ошибка", "Неверная команда", QtWidgets.QMessageBox.Ok,
                                                QtWidgets.QMessageBox.Ok)
@@ -98,12 +102,16 @@ class ConfigDialog(QtWidgets.QDialog):
                                                             "Конфигурация TektronixControl (*.tcc)")
         if filename:
             cmd_list = [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
-            config_data = json.dumps(cmd_list, indent=4)
+            config_data = json.dumps(cmd_list, indent=4, ensure_ascii=False)
             with open(filename, "w") as file:
                 file.write(config_data)
 
     def get_cmd_list(self):
         return [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
+
+    def current_list_item_changed(self, a_item: QtWidgets.QTableWidgetItem, _):
+        if a_item is not None:
+            self.ui.cmd_edit.setText(a_item.text())
 
     def __del__(self):
         print("ConfigDialog deleted")

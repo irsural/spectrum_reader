@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, Enum
 import logging
 import time
 
@@ -28,6 +28,11 @@ class SBR(IntEnum):
 class CmdCase(IntEnum):
     UPPER = 0,
     LOWER = 1
+
+
+class SpecCmd:
+    WAIT = ":WAIT"
+    READ_DELAY = ":READ_DELAY"
 
 
 def get_commands_three(a_cmd_case: CmdCase):
@@ -114,6 +119,7 @@ def is_operation_completed(a_instr):
 def opc_sync(a_instr):
     a_instr.write("*OPC")
 
+    time.sleep(1)
     while not is_operation_completed(a_instr):
         time.sleep(1)
 
@@ -122,28 +128,22 @@ def some_test(a_instr):
     a_instr.write("*CLS")
     a_instr.write("*ESE 1")
     a_instr.write("*SRE 32")
-    opc_sync(a_instr)
     a_instr.write("INSTrument 'SANORMAL'")
     a_instr.write("*RST")
-    opc_sync(a_instr)
     a_instr.write("CONFigure:SPECtrum:CHPower")
     a_instr.write("FREQuency:CENTer 1GHz")
     a_instr.write("FREQuency:SPAN 1MHz")
-    opc_sync(a_instr)
     a_instr.write("*CAL?")
+    time.sleep(30)
     res = a_instr.read()
     print(f"*CAL? result = {res}")
-    opc_sync(a_instr)
     a_instr.write("CHPower:BANDwidth:INTegration 300kHz")
     a_instr.write("SPECtrum:AVERage ON")
-    a_instr.write("SPECtrum:AVERage:COUNt 10")
+    a_instr.write("SPECtrum:AVERage:COUNt 1")
+    a_instr.write("INITiate:CONTinuous OFF")
     opc_sync(a_instr)
-    a_instr.write("INITiate:CONTinuous OFF;*OPC")
+    a_instr.write("INITiate")
     opc_sync(a_instr)
-    time.sleep(10)
-    a_instr.write("INITiate;*OPC")
-    opc_sync(a_instr)
-    time.sleep(10)
     a_instr.write("FETCh:SPECtrum:CHPower?")
     print("res", a_instr.read())
 
@@ -151,11 +151,12 @@ def some_test(a_instr):
 if __name__ == "__main__":
     instr = vxi11.Instrument("192.168.0.91")
     instr.timeout = 3
+
     instr.write("abort")
     print(instr.ask("*idn?"))
-    # try:
-    #     some_test(instr)
-    # except vxi11.vxi11.Vxi11Exception:
-    #     instr.write("SYST:ERR:ALL?")
-    #     errors = instr.read()
-    #     print(errors)
+    try:
+        some_test(instr)
+    except vxi11.Vxi11Exception:
+        instr.write("SYST:ERR:ALL?")
+        errors = instr.read()
+        print(errors)

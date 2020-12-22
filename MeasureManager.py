@@ -98,7 +98,7 @@ class MeasureManager(QtCore.QObject):
     def save_config(self):
         with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'w') as config_file:
             json_data = {measure: config.to_dict() for measure, config in self.measures.items()}
-            config_file.write(json.dumps(json_data, indent=4))
+            config_file.write(json.dumps(json_data, indent=4, ensure_ascii=False))
 
     def open_config(self):
         with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'r') as config_file:
@@ -140,6 +140,7 @@ class MeasureManager(QtCore.QObject):
         if config_dialog.exec() == QtWidgets.QDialog.Accepted:
             self.measures[measure_name].set_cmd_list(config_dialog.get_cmd_list())
             self.save_config()
+        config_dialog.close()
 
     def enable_measure_checkbox_toggled(self, a_state: bool):
         checkbox: QtWidgets.QPushButton = self.sender()
@@ -153,3 +154,6 @@ class MeasureManager(QtCore.QObject):
                 break
         else:
             assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
+
+    def get_enabled_configs(self):
+        return [config.cmd_list() for name, config in self.measures.items() if self.measures[name].is_enabled()]
