@@ -158,7 +158,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        if self.tektronix_controller.start([[":READ:SPEC?"]], self.ui.measure_path_edit.text()):
+        if self.tektronix_controller.start([[":READ:SPEC?"]]):
             self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
@@ -191,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_measure_button_clicked(self):
         cmd_list = self.measure_manager.get_enabled_configs()
-        if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text()):
+        if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text(), a_default_start=True):
             self.lock_interface(True)
 
     def stop_measure_button_clicked(self):

@@ -101,6 +101,15 @@ def read_answer(a_instr: vxi11.Device, a_encoding='utf-8') -> str:
     return res
 
 
+def check_connection(a_instr: vxi11.Device):
+    try:
+        a_instr.ask("*IDN?")
+        res = True
+    except (vxi11.Vxi11Exception, TimeoutError):
+        res = False
+    return res
+
+
 def read_raw_answer(a_instr: vxi11.Device) -> bytes:
     try:
         res = a_instr.read_raw()

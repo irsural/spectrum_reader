@@ -33,13 +33,16 @@ class TektronixController(QtCore.QObject):
     # Для автоматического режима
     class TekStatus(IntEnum):
         READY = 0
-        WAIT_RESPONSE = 1
-        WAIT_OPC = 2
+        WAIT_STRING = 1
+        WAIT_BYTES = 2
+        WAIT_OPC = 3
 
     tektronix_is_ready = QtCore.pyqtSignal()
 
     DEFAULT_CMD_DELAY_S = 0
     OPC_POLL_DELAY_S = 1
+
+    DEFAULT_START_QUEUE = ["*CLS", "*ESE 1", "*SRE 32", ":INST 'SANORMAL'", "*RST", ":WAIT 4"]
 
     def __init__(self, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
@@ -108,19 +111,24 @@ class TektronixController(QtCore.QObject):
 
         return spec_params
 
+    def get_cmd_delay_before_read(self, a_cmd_queue: deque) -> int:
+        delay = 0
+        if a_cmd_queue:
+            next_cmd, next_param = self.parse_cmd(a_cmd_queue[-1])
+            if next_cmd == tek.SpecCmd.READ_DELAY:
+                if next_param is not None:
+                    # Убираем из очереди, т.к. это фиктивная команда
+                    a_cmd_queue.pop()
+                    logging.debug(f"Read delay {next_param} sec")
+                    delay = int(next_param)
+                else:
+                    raise ValueError
+        return delay
+
     def tick(self):
         if self.started:
             if self.wait_timer.check():
-                if self.tek_status == self.TekStatus.WAIT_RESPONSE:
-                    self.tek_status = self.TekStatus.READY
-                    answer = tek.read_answer(self.spec)
-                    logging.info(f'Read result - "{answer}"')
-                elif self.tek_status == self.TekStatus.WAIT_OPC:
-                    if tek.is_operation_completed(self.spec):
-                        self.tek_status = self.TekStatus.READY
-                    else:
-                        self.wait_timer.start(self.OPC_POLL_DELAY_S)
-                else:
+                if self.tek_status == self.TekStatus.READY:
                     if self.current_cmd_queue:
                         current_cmd = self.current_cmd_queue.pop()
                         cmd, param = self.parse_cmd(current_cmd)
@@ -139,36 +147,41 @@ class TektronixController(QtCore.QObject):
                             if cmd == "*OPC":
                                 self.tek_status = self.TekStatus.WAIT_OPC
 
-                            elif cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
-                                binary_spectrum = tek.read_raw_answer(self.spec)
-
-                                if binary_spectrum:
-                                    self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
-
                             elif "?" in cmd:
-                                self.tek_status = self.TekStatus.WAIT_RESPONSE
+                                if cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
+                                    self.tek_status = self.TekStatus.WAIT_BYTES
+                                else:
+                                    self.tek_status = self.TekStatus.WAIT_STRING
 
-                                if self.current_cmd_queue:
-                                    next_cmd, next_param = self.parse_cmd(self.current_cmd_queue[-1])
-                                    if next_cmd == tek.SpecCmd.READ_DELAY:
-                                        if next_param is not None:
-                                            # Убираем из очереди, т.к. это фиктивная команда
-                                            self.current_cmd_queue.pop()
-                                            logging.debug(f"Read delay {next_param} sec")
-                                            self.wait_timer.start(int(next_param))
-                                        else:
-                                            self.handle_measure_error(
-                                                f"Не задан параметр для команды {tek.SpecCmd.READ_DELAY}")
-                                    else:
-                                        # Читаем сразу, без дефолтной задержки
-                                        self.wait_timer.start(0)
+                                try:
+                                    delay_before_read = self.get_cmd_delay_before_read(self.current_cmd_queue)
+                                    self.wait_timer.start(delay_before_read)
+                                except ValueError:
+                                    self.handle_measure_error(f"Не задан параметр для команды {tek.SpecCmd.READ_DELAY}")
                     else:
                         try:
                             self.current_cmd_queue = next(self.cmd_queue_gen)
-                            logging.debug("Следующая очередь команд")
+                            logging.info("Следующая очередь команд")
                         except StopIteration:
                             self.stop()
                             self.tektronix_is_ready.emit()
+
+                elif self.tek_status == self.TekStatus.WAIT_STRING:
+                    self.tek_status = self.TekStatus.READY
+                    answer = tek.read_answer(self.spec)
+                    logging.info(f'Read result - "{answer}"')
+
+                elif self.tek_status == self.TekStatus.WAIT_BYTES:
+                    self.tek_status = self.TekStatus.READY
+                    binary_spectrum = tek.read_raw_answer(self.spec)
+                    if binary_spectrum:
+                        self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
+
+                elif self.tek_status == self.TekStatus.WAIT_OPC:
+                    if tek.is_operation_completed(self.spec):
+                        self.tek_status = self.TekStatus.READY
+                    else:
+                        self.wait_timer.start(self.OPC_POLL_DELAY_S)
 
     def send_cmd(self, a_cmd: str, a_read_bytes: bool = False) -> bool:
         result = False
@@ -213,13 +226,17 @@ class TektronixController(QtCore.QObject):
                 decimal_sum += x_discrete
                 x_points.append(float(decimal_sum))
 
-            graph_name = f"Центр {self.convert_hz(a_spec_params.center)}, " \
-                         f"Span {self.convert_hz(a_spec_params.span)}, " \
+            graph_name = f"{self.convert_hz(a_spec_params.x_start)} - " \
+                         f"{self.convert_hz(a_spec_params.x_stop)}, " \
                          f"RBW {self.convert_hz(a_spec_params.rbw)}"
 
             self.graph_widget.plotItem.clear()
             self.graph_widget.plot(x_points, spec_data, pen=self.graph_pen, name=graph_name)
-            self.graph_widget.setYRange(a_spec_params.y_start, a_spec_params.y_stop)
+
+            y_min, y_max = min(spec_data), max(spec_data)
+            y_start = a_spec_params.y_start if y_min > a_spec_params.y_start else y_min
+            y_stop = a_spec_params.y_stop if y_max < a_spec_params.y_stop else y_max
+            self.graph_widget.setYRange(y_start, y_stop)
 
             self.save_results(graph_name, x_points, spec_data)
         else:
@@ -245,16 +262,22 @@ class TektronixController(QtCore.QObject):
                 writer = csv.writer(csv_file)
                 writer.writerows(csv_data)
 
-    def start(self, a_cmd_list: List[list], a_save_folder=""):
+    def start(self, a_cmd_list: List[list], a_save_folder="", a_default_start=False):
         if a_cmd_list and a_cmd_list[0]:
-            self.current_commands = a_cmd_list
-            self.cmd_queue_gen = self.get_next_cmd_deque()
-            self.current_cmd_queue = next(self.cmd_queue_gen)
-            self.wait_timer.start(0)
-            self.tek_status = self.TekStatus.READY
-            self.save_folder = a_save_folder
+            if tek.check_connection(self.spec):
+                self.current_commands = a_cmd_list
+                if a_default_start:
+                    self.current_commands.insert(0, self.DEFAULT_START_QUEUE)
+                self.cmd_queue_gen = self.get_next_cmd_deque()
+                self.current_cmd_queue = next(self.cmd_queue_gen)
+                self.wait_timer.start(0)
+                self.tek_status = self.TekStatus.READY
+                self.save_folder = a_save_folder
 
-            self.started = True
+                self.started = True
+            else:
+                logging.error("Не удалось установить соединение, необходимо вручную сбросить "
+                              "Remote Interface на спектроанализаторе")
         return self.started
 
     def stop(self):

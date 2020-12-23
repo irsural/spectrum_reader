@@ -63,6 +63,8 @@ class Ui_MainWindow(object):
         self.cmd_edit.setObjectName("cmd_edit")
         self.gridLayout_2.addWidget(self.cmd_edit, 8, 0, 1, 1)
         self.send_cmd_button = QtWidgets.QPushButton(self.layoutWidget1)
+        self.send_cmd_button.setAutoDefault(True)
+        self.send_cmd_button.setDefault(True)
         self.send_cmd_button.setObjectName("send_cmd_button")
         self.gridLayout_2.addWidget(self.send_cmd_button, 8, 1, 1, 1)
         self.connect_button = QtWidgets.QPushButton(self.layoutWidget1)
