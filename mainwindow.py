@@ -6,7 +6,7 @@ import pyqtgraph
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
 from irspy.settings_ini_parser import BadIniException
-from irspy.utils import exception_decorator
+from irspy.utils import exception_decorator, exception_decorator_print
 from irspy.qt import qt_utils
 
 from ui.py.mainwindow import Ui_MainWindow as MainForm
@@ -146,19 +146,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tektronix_controller.connect(self.ui.ip_edit.text())
 
     def send_button_clicked(self):
-        if self.tektronix_controller.start([[self.ui.cmd_edit.text()]]):
+        if self.tektronix_controller.start({"Send cmd": [self.ui.cmd_edit.text()]}):
             self.lock_interface(True)
 
     def idn_button_clicked(self):
-        if self.tektronix_controller.start([["*IDN?"]]):
+        if self.tektronix_controller.start({"IDN": ["*IDN?"]}):
             self.lock_interface(True)
 
     def errors_button_clicked(self):
-        if self.tektronix_controller.start([[":SYST:ERR:ALL?"]]):
+        if self.tektronix_controller.start({"Errors": [":SYST:ERR:ALL?"]}):
             self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        if self.tektronix_controller.start([[":READ:SPEC?"]]):
+        if self.tektronix_controller.start({"Спектр": [":READ:SPEC?"]}, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
@@ -190,6 +190,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.measure_manager.remove_measure()
 
     def start_measure_button_clicked(self):
+        self.measure_manager.save_config()
         cmd_list = self.measure_manager.get_enabled_configs()
         if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text(), a_default_start=True):
             self.lock_interface(True)
