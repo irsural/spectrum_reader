@@ -5,9 +5,8 @@ from enum import IntEnum
 import logging
 import struct
 import math
-import csv
 
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtCore
 from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
 from vxi11 import vxi11
 
@@ -58,13 +57,13 @@ class TektronixController(QtCore.QObject):
         (204, 102, 255),
     )
 
-    def __init__(self, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
+    def __init__(self, a_settings, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.spec: Optional[None, vxi11.Device] = None
 
+        self.settings = a_settings
         self.graph_widget = a_graph_widget
-
         self.cmd_tree = a_cmd_tree
 
         self.started = False
@@ -302,11 +301,16 @@ class TektronixController(QtCore.QObject):
             png_exporter.parameters()['width'] = 1e3
             png_exporter.export(png_filename)
 
+            # В LogMode=True сохраняются левые значения
+            self.graph_widget.plotItem.setLogMode(x=False, y=False)
+
             csv_exporter = exporters.CSVExporter(self.graph_widget.plotItem)
             try:
                 csv_exporter.export(csv_filename)
             except ValueError:
                 logging.error("Не удалось сохранить csv-файл")
+
+            self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
     def start(self, a_commands: Dict[str, List], a_save_folder=""):
         if a_commands:

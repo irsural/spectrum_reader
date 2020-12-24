@@ -1,5 +1,8 @@
 from logging.handlers import RotatingFileHandler
+from typing import List
 import logging
+import math
+import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph
@@ -54,7 +57,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cmd_tree = tek.get_commands_three(cmd_case)
             self.set_completer(self.cmd_tree)
 
-            self.tektronix_controller = TektronixController(self.graph_widget, self.cmd_tree)
+            self.tektronix_controller = TektronixController(self.settings, self.graph_widget, self.cmd_tree)
             self.tektronix_controller.connect(self.settings.device_ip)
             self.tektronix_controller.tektronix_is_ready.connect(self.tektronix_is_ready)
 
@@ -105,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.stop_measure_button.clicked.connect(self.stop_measure_button_clicked)
 
         self.ui.log_scale_checkbox.toggled.connect(self.log_scale_checkbox_toggled)
+        self.ui.csv_import_button.clicked.connect(self.csv_import_button_clicked)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -207,8 +211,29 @@ class MainWindow(QtWidgets.QMainWindow):
         self.graph_widget.plotItem.setLogMode(x=a_state, y=False)
         self.settings.log_scale_enabled = int(a_state)
 
-    def start_with_checkbox_toggled(self, a_state: bool):
-        self.settings.default_start_config_enabled = int(a_state)
+    def csv_import_button_clicked(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Импорт графика из csv",
+                                                            self.ui.measure_path_edit.text(), "CSV (*.csv)")
+        if filename:
+            with open(filename, 'r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                headers = next(csv_reader)
+                plots_count = len(headers) // 2
+
+                x_data: List[List[float]] = [[] for _ in range(plots_count)]
+                y_data: List[List[float]] = [[] for _ in range(plots_count)]
+
+                for row in csv_reader:
+                    for column, p in enumerate(row):
+                        if column < len(headers):
+                            data = x_data if column % 2 == 0 else y_data
+                            data[math.floor(column // 2)].append(float(p))
+
+        self.graph_widget.plotItem.clear()
+        for i in range(plots_count):
+            graph_color = TektronixController.GRAPH_COLORS[i % len(TektronixController.GRAPH_COLORS)]
+            graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
+            self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
 
     def open_about(self):
         about_dialog = AboutDialog(self)
