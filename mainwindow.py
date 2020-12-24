@@ -55,6 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tip_full_cmd_checkbox.setChecked(self.settings.tip_full_cmd)
             cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
             self.cmd_tree = tek.get_commands_three(cmd_case)
+            self.add_extra_commands(self.cmd_tree)
             self.set_completer(self.cmd_tree)
 
             self.tektronix_controller = TektronixController(self.settings, self.graph_widget, self.cmd_tree)
@@ -149,6 +150,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def tick(self):
         self.tektronix_controller.tick()
 
+    @staticmethod
+    def add_extra_commands(a_cmd_tree: dict):
+        a_cmd_tree[":WAIT"] = {"desc": "Wait N seconds"}
+        a_cmd_tree[":READ_DELAY"] = {"desc": "Wait N seconds before reading the answer"}
+
     def connect_button_clicked(self):
         self.settings.device_ip = self.ui.ip_edit.text()
         self.tektronix_controller.connect(self.ui.ip_edit.text())
@@ -174,6 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
         self.cmd_tree = tek.get_commands_three(cmd_case)
+        self.add_extra_commands(self.cmd_tree)
         self.set_completer(self.cmd_tree)
         self.measure_manager.update_cmd_tree(self.cmd_tree)
 
@@ -229,11 +236,11 @@ class MainWindow(QtWidgets.QMainWindow):
                             data = x_data if column % 2 == 0 else y_data
                             data[math.floor(column // 2)].append(float(p))
 
-        self.graph_widget.plotItem.clear()
-        for i in range(plots_count):
-            graph_color = TektronixController.GRAPH_COLORS[i % len(TektronixController.GRAPH_COLORS)]
-            graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
-            self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
+            self.graph_widget.plotItem.clear()
+            for i in range(plots_count):
+                graph_color = TektronixController.GRAPH_COLORS[i % len(TektronixController.GRAPH_COLORS)]
+                graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
+                self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
 
     def open_about(self):
         about_dialog = AboutDialog(self)
