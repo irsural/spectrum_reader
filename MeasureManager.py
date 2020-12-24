@@ -31,7 +31,6 @@ class MeasureManager(QtCore.QObject):
         self.measures: Dict[str, TekConfig] = OrderedDictInsert()
 
         self.open_config()
-
         self.measure_name_before_rename = ""
 
         self.measures_table.itemDoubleClicked.connect(self.change_measure_name_started)
@@ -157,6 +156,7 @@ class MeasureManager(QtCore.QObject):
 
     def get_enabled_configs(self):
         enabled_configs = OrderedDictInsert()
+
         for name, config in self.measures.items():
             if self.measures[name].is_enabled():
                 enabled_configs[name] = config.cmd_list()

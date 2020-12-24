@@ -63,6 +63,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.show()
             self.connect_all()
 
+            self.ui.log_scale_checkbox.setChecked(self.settings.log_scale_enabled)
+
             self.tick_timer = QtCore.QTimer(self)
             self.tick_timer.timeout.connect(self.tick)
             self.tick_timer.start(10)
@@ -101,6 +103,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
         self.ui.start_measure_button.clicked.connect(self.start_measure_button_clicked)
         self.ui.stop_measure_button.clicked.connect(self.stop_measure_button_clicked)
+
+        self.ui.log_scale_checkbox.toggled.connect(self.log_scale_checkbox_toggled)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -192,12 +196,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
         cmd_list = self.measure_manager.get_enabled_configs()
-        if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text(), a_default_start=True):
+        if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
 
     def stop_measure_button_clicked(self):
         self.tektronix_controller.stop()
         self.lock_interface(False)
+
+    def log_scale_checkbox_toggled(self, a_state: bool):
+        self.graph_widget.plotItem.setLogMode(x=a_state, y=False)
+        self.settings.log_scale_enabled = int(a_state)
+
+    def start_with_checkbox_toggled(self, a_state: bool):
+        self.settings.default_start_config_enabled = int(a_state)
 
     def open_about(self):
         about_dialog = AboutDialog(self)

@@ -4,10 +4,11 @@ from decimal import Decimal
 from enum import IntEnum
 import logging
 import struct
+import math
 import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from pyqtgraph import PlotWidget, mkPen, exporters
+from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
 from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
@@ -42,9 +43,6 @@ class TektronixController(QtCore.QObject):
     DEFAULT_CMD_DELAY_S = 0
     OPC_POLL_DELAY_S = 1
 
-    DEFAULT_START_QUEUE_NAME = "DEFAULT_QUEUE"
-    DEFAULT_START_QUEUE = ["*CLS", "*ESE 1", "*SRE 32", ":INST 'SANORMAL'", "*RST", ":WAIT 4"]
-
     GRAPH_COLORS = (
         (255, 0, 0),
         (0, 255, 0),
@@ -78,6 +76,9 @@ class TektronixController(QtCore.QObject):
         self.save_folder = ""
         self.current_measure_name = ""
 
+        self.current_graph = 0
+        self.graphs_data: Dict[int, Tuple[List, List]] = {}
+
         self.convert_hz = value_to_user_with_units("Гц")
 
     def reset(self):
@@ -89,6 +90,8 @@ class TektronixController(QtCore.QObject):
         self.tek_status = self.TekStatus.READY
         self.save_folder = ""
         self.current_measure_name = ""
+        self.current_graph = 0
+        self.graphs_data = {}
 
     def connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -176,12 +179,12 @@ class TektronixController(QtCore.QObject):
                                 except ValueError:
                                     self.handle_measure_error(f"Не задан параметр для команды {tek.SpecCmd.READ_DELAY}")
                     else:
-                        self.save_results(self.current_measure_name)
                         try:
                             self.current_measure_name, self.current_cmd_queue = next(self.cmd_queue_gen)
-                            self.graph_widget.plotItem.clear()
+                            self.current_graph = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
+                            self.save_results(self.current_measure_name)
                             self.stop()
                             self.tektronix_is_ready.emit()
 
@@ -194,7 +197,8 @@ class TektronixController(QtCore.QObject):
                     self.tek_status = self.TekStatus.READY
                     binary_spectrum = tek.read_raw_answer(self.spec)
                     if binary_spectrum:
-                        self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
+                        self.draw_spectrum(binary_spectrum, self.get_specter_parameters(), self.current_graph)
+                        self.current_graph += 1
 
                 elif self.tek_status == self.TekStatus.WAIT_OPC:
                     if tek.is_operation_completed(self.spec):
@@ -234,31 +238,52 @@ class TektronixController(QtCore.QObject):
 
         return float_data
 
-    def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters):
+    @staticmethod
+    def normalize_spectrum_data(a_data: List[float], a_rbw_hz: float) -> List[float]:
+        coef = 10 * math.log(a_rbw_hz / 1000., 10)
+        return [d - coef for d in a_data]
+
+    @staticmethod
+    def calculate_x_points(a_x_start: float, a_x_stop: float, a_x_count: int) -> List[float]:
+        x_discrete = Decimal(a_x_stop - a_x_start) / (a_x_count - 1)
+        x_points = [a_x_start]
+        decimal_sum = Decimal(a_x_start)
+        for _ in range(a_x_count - 1):
+            decimal_sum += x_discrete
+            x_points.append(float(decimal_sum))
+        return x_points
+
+    def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters, a_graph_number: int):
         if self.byte_to_char(a_data, 0) == '#':
-            spec_data = self.extract_spectrum_data(a_data)
+            amplitudes = self.extract_spectrum_data(a_data)
+            amplitudes = self.normalize_spectrum_data(amplitudes, a_spec_params.rbw)
+            frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(amplitudes))
 
-            x_discrete = Decimal(a_spec_params.x_stop - a_spec_params.x_start) / (len(spec_data) - 1)
-            x_points = [a_spec_params.x_start]
-            decimal_sum = Decimal(a_spec_params.x_start)
-            for _ in range(len(spec_data) - 1):
-                decimal_sum += x_discrete
-                x_points.append(float(decimal_sum))
+            try:
+                x_data, y_data = self.graphs_data[a_graph_number]
+                x_data.extend(frequencies)
+                y_data.extend(amplitudes)
+                plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[a_graph_number]
+                plot_data_item.setData(x=x_data, y=y_data)
 
-            plots_count = len(self.graph_widget.plotItem.listDataItems())
-            graph_color = TektronixController.GRAPH_COLORS[plots_count % len(TektronixController.GRAPH_COLORS)]
-            graph_pen = mkPen(color=graph_color, width=2)
+            except KeyError:
+                x_data, y_data = frequencies, amplitudes
+                # Это первые данные для графика с a_graph_number номером
+                graph_color = TektronixController.GRAPH_COLORS[a_graph_number % len(TektronixController.GRAPH_COLORS)]
+                graph_pen = mkPen(color=graph_color, width=2)
 
-            graph_name = f"{plots_count + 1}. {self.convert_hz(a_spec_params.x_start)} - " \
-                         f"{self.convert_hz(a_spec_params.x_stop)}, " \
-                         f"RBW {self.convert_hz(a_spec_params.rbw)}"
+                # graph_name = f"{a_graph_number + 1}. {self.convert_hz(a_spec_params.x_start)} - " \
+                #              f"{self.convert_hz(a_spec_params.x_stop)}, " \
+                #              f"RBW {self.convert_hz(a_spec_params.rbw)}"
 
-            self.graph_widget.plot(x_points, spec_data, pen=graph_pen, name=graph_name)
+                self.graph_widget.plot(x=x_data, y=y_data, pen=graph_pen, name=str(a_graph_number + 1))
+                self.graphs_data[a_graph_number] = (x_data, y_data)
 
-            y_min, y_max = min(spec_data), max(spec_data)
-            y_start = min((a_spec_params.y_start, y_min))
-            y_stop = max((a_spec_params.y_stop, y_max))
-            self.graph_widget.setYRange(y_start, y_stop)
+            if y_data:
+                y_min, y_max = min(y_data), max(y_data)
+                y_start = min((a_spec_params.y_start, y_min))
+                y_stop = max((a_spec_params.y_stop, y_max))
+                self.graph_widget.setYRange(y_start, y_stop)
         else:
             logging.error("Неверные данные для построения графика спектра")
 
@@ -269,7 +294,7 @@ class TektronixController(QtCore.QObject):
             yield name, cmd_deque
 
     def save_results(self, a_filename):
-        if self.save_folder and self.current_measure_name != self.DEFAULT_START_QUEUE_NAME:
+        if self.save_folder and self.graph_widget.plotItem.listDataItems():
             png_filename = f"{self.save_folder}/{a_filename}.png"
             csv_filename = f"{self.save_folder}/{a_filename}.csv"
 
@@ -278,25 +303,24 @@ class TektronixController(QtCore.QObject):
             png_exporter.export(png_filename)
 
             csv_exporter = exporters.CSVExporter(self.graph_widget.plotItem)
-            csv_exporter.export(csv_filename)
+            try:
+                csv_exporter.export(csv_filename)
+            except ValueError:
+                logging.error("Не удалось сохранить csv-файл")
 
-            # csv_data = zip(a_x_data, a_y_data)
-            # with open(csv_filename, 'w', newline='') as csv_file:
-            #     writer = csv.writer(csv_file)
-            #     writer.writerows(csv_data)
-
-    def start(self, a_commands: Dict[str, List], a_save_folder="", a_default_start=False):
+    def start(self, a_commands: Dict[str, List], a_save_folder=""):
         if a_commands:
             if tek.check_connection(self.spec):
                 self.current_commands = a_commands
-                if a_default_start:
-                    self.current_commands.insert(0, self.DEFAULT_START_QUEUE_NAME, self.DEFAULT_START_QUEUE)
                 self.cmd_queue_gen = self.get_next_cmd_deque()
                 self.current_measure_name, self.current_cmd_queue = next(self.cmd_queue_gen)
                 self.wait_timer.start(0)
                 self.tek_status = self.TekStatus.READY
                 self.save_folder = a_save_folder
                 self.graph_widget.plotItem.clear()
+
+                self.current_graph = 0
+                self.graphs_data = {}
 
                 self.started = True
             else:

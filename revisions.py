@@ -2,5 +2,5 @@ from enum import IntEnum
 
 
 class Revisions(IntEnum):
-    tektronix_control = 14
+    tektronix_control = 15
     irspy = 47

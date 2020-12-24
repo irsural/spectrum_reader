@@ -10,6 +10,7 @@ import tekvisa_control as tek
 
 
 class TekConfig:
+
     def __init__(self, a_cmd_list=None, a_enable=False):
         self._cmd_list = [] if a_cmd_list is None else a_cmd_list
         self._enable = a_enable
