@@ -13,7 +13,7 @@ from irspy.utils import exception_decorator, exception_decorator_print
 from irspy.qt import qt_utils
 
 from ui.py.mainwindow import Ui_MainWindow as MainForm
-from TektronixController import TektronixController
+from MeasureConductor import MeasureConductor
 from tekvisa_qcompleter import CmdCompleter
 from MeasureManager import MeasureManager
 from about_dialog import AboutDialog
@@ -47,7 +47,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
-            self.ui.ip_edit.setText(self.settings.device_ip)
+            self.ui.sa_ip_edit.setText(self.settings.sa_ip)
+            self.ui.gnrw_ip_edit.setText(self.settings.gnrw_ip)
+            self.gnrw_state_changed(False, 0)
 
             self.graph_widget = pyqtgraph.PlotWidget()
             self.init_graph(self.graph_widget)
@@ -58,9 +60,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_extra_commands(self.cmd_tree)
             self.set_completer(self.cmd_tree)
 
-            self.tektronix_controller = TektronixController(self.settings, self.graph_widget, self.cmd_tree)
-            self.tektronix_controller.connect(self.settings.device_ip)
-            self.tektronix_controller.tektronix_is_ready.connect(self.tektronix_is_ready)
+            self.measure_conductor = MeasureConductor(self.ui.gnrw_ip_edit.text(), self.settings,
+                                                      self.graph_widget, self.cmd_tree)
+            self.measure_conductor.sa_connect(self.settings.sa_ip)
+            self.measure_conductor.tektronix_is_ready.connect(self.tektronix_is_ready)
+            self.measure_conductor.gnrw_state_changed.connect(self.gnrw_state_changed)
 
             self.measure_manager = MeasureManager(self.cmd_tree, self.ui.measures_table, self.settings)
 
@@ -96,7 +100,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.send_cmd_button.clicked.connect(self.send_button_clicked)
         self.ui.idn_button.clicked.connect(self.idn_button_clicked)
         self.ui.error_buttons.clicked.connect(self.errors_button_clicked)
-        self.ui.connect_button.clicked.connect(self.connect_button_clicked)
+        self.ui.sa_connect_button.clicked.connect(self.sa_connect_button_clicked)
+        self.ui.gnrw_connect_button.clicked.connect(self.gnrw_connect_button_clicked)
         self.ui.read_specter_button.clicked.connect(self.read_specter_button_clicked)
 
         self.ui.tip_full_cmd_checkbox.toggled.connect(self.tip_full_cmd_checkbox_toggled)
@@ -130,7 +135,8 @@ class MainWindow(QtWidgets.QMainWindow):
         logging.getLogger().setLevel(logging.DEBUG)
 
     def lock_interface(self, a_lock: bool):
-        self.ui.connect_button.setDisabled(a_lock)
+        self.ui.sa_connect_button.setDisabled(a_lock)
+        self.ui.gnrw_connect_button.setDisabled(a_lock)
         self.ui.tip_full_cmd_checkbox.setDisabled(a_lock)
         self.ui.send_cmd_button.setDisabled(a_lock)
         self.ui.idn_button.setDisabled(a_lock)
@@ -148,31 +154,45 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @exception_decorator
     def tick(self):
-        self.tektronix_controller.tick()
+        self.measure_conductor.tick()
 
     @staticmethod
     def add_extra_commands(a_cmd_tree: dict):
         a_cmd_tree[":WAIT"] = {"desc": "Wait N seconds"}
         a_cmd_tree[":READ_DELAY"] = {"desc": "Wait N seconds before reading the answer"}
 
-    def connect_button_clicked(self):
-        self.settings.device_ip = self.ui.ip_edit.text()
-        self.tektronix_controller.connect(self.ui.ip_edit.text())
+    def sa_connect_button_clicked(self):
+        self.settings.sa_ip = self.ui.sa_ip_edit.text()
+        self.measure_conductor.sa_connect(self.ui.sa_ip_edit.text())
+
+    def gnrw_connect_button_clicked(self):
+        self.settings.gnrw_ip = self.ui.gnrw_ip_edit.text()
+        self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
+
+    def gnrw_state_changed(self, a_connected, a_id):
+        if a_connected:
+            pixmap = QtGui.QPixmap(":/icons/icons/checkbox_ok.png")
+            self.ui.gnrw_factory_number_label.setText(f"№{a_id}")
+        else:
+            pixmap = QtGui.QPixmap(":/icons/icons/checkbox_fail.png")
+            self.ui.gnrw_factory_number_label.setText("")
+
+        self.ui.gnrw_status_label.setPixmap(pixmap.scaled(20, 20, QtCore.Qt.KeepAspectRatio))
 
     def send_button_clicked(self):
-        if self.tektronix_controller.start({"Send cmd": [self.ui.cmd_edit.text()]}):
+        if self.measure_conductor.start({"Send cmd": [self.ui.cmd_edit.text()]}):
             self.lock_interface(True)
 
     def idn_button_clicked(self):
-        if self.tektronix_controller.start({"IDN": ["*IDN?"]}):
+        if self.measure_conductor.start({"IDN": ["*IDN?"]}):
             self.lock_interface(True)
 
     def errors_button_clicked(self):
-        if self.tektronix_controller.start({"Errors": [":SYST:ERR:ALL?"]}):
+        if self.measure_conductor.start({"Errors": [":SYST:ERR:ALL?"]}):
             self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        if self.tektronix_controller.start({"Спектр": [":READ:SPEC?"]}, self.ui.measure_path_edit.text()):
+        if self.measure_conductor.start({"Спектр": [":READ:SPEC?"]}, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
@@ -207,11 +227,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
         cmd_list = self.measure_manager.get_enabled_configs()
-        if self.tektronix_controller.start(cmd_list, self.ui.measure_path_edit.text()):
+        if self.measure_conductor.start(cmd_list, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
 
     def stop_measure_button_clicked(self):
-        self.tektronix_controller.stop()
+        self.measure_conductor.stop()
         self.lock_interface(False)
 
     def log_scale_checkbox_toggled(self, a_state: bool):
@@ -238,7 +258,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.graph_widget.plotItem.clear()
             for i in range(plots_count):
-                graph_color = TektronixController.GRAPH_COLORS[i % len(TektronixController.GRAPH_COLORS)]
+                graph_color = MeasureConductor.GRAPH_COLORS[i % len(MeasureConductor.GRAPH_COLORS)]
                 graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
                 self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
 

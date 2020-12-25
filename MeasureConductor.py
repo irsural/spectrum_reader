@@ -11,6 +11,7 @@ from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
 from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
+from irspy.pokrov import pokrov_dll
 
 import tekvisa_control as tek
 
@@ -29,7 +30,7 @@ class SpecterParameters:
         self.rbw = 0
 
 
-class TektronixController(QtCore.QObject):
+class MeasureConductor(QtCore.QObject):
     # Для автоматического режима
     class TekStatus(IntEnum):
         READY = 0
@@ -38,6 +39,7 @@ class TektronixController(QtCore.QObject):
         WAIT_OPC = 3
 
     tektronix_is_ready = QtCore.pyqtSignal()
+    gnrw_state_changed = QtCore.pyqtSignal(bool, int)
 
     DEFAULT_CMD_DELAY_S = 0
     OPC_POLL_DELAY_S = 1
@@ -57,7 +59,7 @@ class TektronixController(QtCore.QObject):
         (204, 102, 255),
     )
 
-    def __init__(self, a_settings, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
+    def __init__(self, a_gnrw_ip: str, a_settings, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.spec: Optional[None, vxi11.Device] = None
@@ -74,6 +76,12 @@ class TektronixController(QtCore.QObject):
         self.tek_status = self.TekStatus.READY
         self.save_folder = ""
         self.current_measure_name = ""
+
+        self.pokrov_prev_connected_state = False
+        self.gnrw_check_connection_timer = Timer(0.2)
+        self.gnrw_check_connection_timer.start()
+        self.pokrov = pokrov_dll.PokrovDrv()
+        self.pokrov.connect(a_gnrw_ip)
 
         self.current_graph = 0
         self.graphs_data: Dict[int, Tuple[List, List]] = {}
@@ -92,13 +100,13 @@ class TektronixController(QtCore.QObject):
         self.current_graph = 0
         self.graphs_data = {}
 
-    def connect(self, a_ip: str):
+    def sa_connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
         self.spec.timeout = 3
         logging.debug("Connected")
 
-    def abort_tektronix(self):
-        self.send_cmd(":ABOR")
+    def gnrw_connect(self, a_ip: str):
+        self.pokrov.connect(a_ip)
 
     def handle_measure_error(self, a_error_msg):
         logging.error("Во время измерения произошла ошибка, измерение будет остановлено")
@@ -145,6 +153,17 @@ class TektronixController(QtCore.QObject):
         return delay
 
     def tick(self):
+        self.pokrov.tick()
+
+        if self.gnrw_check_connection_timer.check():
+            self.gnrw_check_connection_timer.start()
+
+            gnrw_state = self.pokrov.is_connected()
+            if gnrw_state != self.pokrov_prev_connected_state:
+                self.pokrov_prev_connected_state = gnrw_state
+
+                self.gnrw_state_changed.emit(gnrw_state, self.pokrov.id)
+
         if self.started:
             if self.wait_timer.check():
                 if self.tek_status == self.TekStatus.READY:
@@ -153,7 +172,7 @@ class TektronixController(QtCore.QObject):
                         cmd, param = self.parse_cmd(current_cmd)
 
                         logging.debug(f'Current cmd - "{current_cmd}"')
-                        self.wait_timer.start(TektronixController.DEFAULT_CMD_DELAY_S)
+                        self.wait_timer.start(MeasureConductor.DEFAULT_CMD_DELAY_S)
 
                         if cmd == tek.SpecCmd.WAIT:
                             if param is not None:
@@ -266,14 +285,13 @@ class TektronixController(QtCore.QObject):
                 plot_data_item.setData(x=x_data, y=y_data)
 
             except KeyError:
-                x_data, y_data = frequencies, amplitudes
                 # Это первые данные для графика с a_graph_number номером
-                graph_color = TektronixController.GRAPH_COLORS[a_graph_number % len(TektronixController.GRAPH_COLORS)]
+                x_data, y_data = frequencies, amplitudes
+                graph_color = MeasureConductor.GRAPH_COLORS[a_graph_number % len(MeasureConductor.GRAPH_COLORS)]
                 graph_pen = mkPen(color=graph_color, width=2)
 
                 # graph_name = f"{a_graph_number + 1}. {self.convert_hz(a_spec_params.x_start)} - " \
-                #              f"{self.convert_hz(a_spec_params.x_stop)}, " \
-                #              f"RBW {self.convert_hz(a_spec_params.rbw)}"
+                #              f"{self.convert_hz(a_spec_params.x_stop)}, RBW {self.convert_hz(a_spec_params.rbw)}"
 
                 self.graph_widget.plot(x=x_data, y=y_data, pen=graph_pen, name=str(a_graph_number + 1))
                 self.graphs_data[a_graph_number] = (x_data, y_data)
