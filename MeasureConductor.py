@@ -59,6 +59,26 @@ class MeasureConductor(QtCore.QObject):
         (204, 102, 255),
     )
 
+    SPEC_CMD_WAIT = ":WAIT"
+    SPEC_CMD_READ_DELAY = ":READ_DELAY"
+
+    GNRW_COMMANDS_NODE_NAME = ":GNRW"
+    GNRW_CMD_ENABLE = "ENABLE"
+    GNRW_CMD_RADIO = "RADIO"
+    GNRW_CMD_RADIO_ASK = "RADIO?"
+    GNRW_CMD_LINE = "LINE"
+    GNRW_CMD_LINE_ASK = "LINE?"
+
+    GNRW_COMMANDS_TREE = {
+        GNRW_CMD_ENABLE: {"desc": "Включить/выключить сигнал на ГШ Покров"},
+        GNRW_CMD_RADIO: {"desc": "Управление мощностью сигнала поля"},
+        GNRW_CMD_RADIO_ASK: {"desc": "Управление мощностью сигнала поля"},
+        GNRW_CMD_LINE: {"desc": "Управление мощностью сигнала сети"},
+        GNRW_CMD_LINE_ASK: {"desc": "Управление мощностью сигнала сети"},
+    }
+
+    GNRW_SYNC_DELAY_S = 2
+
     def __init__(self, a_gnrw_ip: str, a_settings, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
@@ -115,13 +135,17 @@ class MeasureConductor(QtCore.QObject):
         self.stop()
         self.tektronix_is_ready.emit()
 
-    @staticmethod
-    def parse_cmd(a_cmd) -> Tuple[str, str]:
-        cmd_param = a_cmd.split(" ", maxsplit=1)
-        cmd, param = cmd_param[0], None
-        if len(cmd_param) > 1:
-            param = cmd_param[1]
-        return cmd, param
+    def parse_cmd(self, a_cmd) -> Tuple[str, str]:
+        cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
+        if cmd_description:
+            cmd_param = a_cmd.split(" ", maxsplit=1)
+            cmd, param = cmd_param[0], None
+            if len(cmd_param) > 1:
+                param = cmd_param[1]
+            return cmd, param
+        else:
+            logging.error(f'Задана несуществующая команда: "{a_cmd}"')
+            return "", ""
 
     def get_specter_parameters(self) -> SpecterParameters:
         spec_params = SpecterParameters()
@@ -142,7 +166,7 @@ class MeasureConductor(QtCore.QObject):
         delay = 0
         if a_cmd_queue:
             next_cmd, next_param = self.parse_cmd(a_cmd_queue[-1])
-            if next_cmd == tek.SpecCmd.READ_DELAY:
+            if next_cmd == self.SPEC_CMD_READ_DELAY:
                 if next_param is not None:
                     # Убираем из очереди, т.к. это фиктивная команда
                     a_cmd_queue.pop()
@@ -171,31 +195,44 @@ class MeasureConductor(QtCore.QObject):
                         current_cmd = self.current_cmd_queue.pop()
                         cmd, param = self.parse_cmd(current_cmd)
 
-                        logging.debug(f'Current cmd - "{current_cmd}"')
-                        self.wait_timer.start(MeasureConductor.DEFAULT_CMD_DELAY_S)
+                        if cmd:
+                            logging.debug(f'Current cmd - "{current_cmd}"')
+                            self.wait_timer.start(MeasureConductor.DEFAULT_CMD_DELAY_S)
 
-                        if cmd == tek.SpecCmd.WAIT:
-                            if param is not None:
-                                self.wait_timer.start(int(param))
-                            else:
-                                self.handle_measure_error(f"Не задан параметр для команды {tek.SpecCmd.WAIT}")
-
-                        else:
-                            tek.send_cmd(self.spec, current_cmd)
-                            if cmd == "*OPC":
-                                self.tek_status = self.TekStatus.WAIT_OPC
-
-                            elif "?" in cmd:
-                                if cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
-                                    self.tek_status = self.TekStatus.WAIT_BYTES
-                                else:
-                                    self.tek_status = self.TekStatus.WAIT_STRING
+                            if cmd.startswith(self.GNRW_COMMANDS_NODE_NAME):
+                                self.gnrw_send_cmd(cmd, param)
 
                                 try:
                                     delay_before_read = self.get_cmd_delay_before_read(self.current_cmd_queue)
                                     self.wait_timer.start(delay_before_read)
                                 except ValueError:
-                                    self.handle_measure_error(f"Не задан параметр для команды {tek.SpecCmd.READ_DELAY}")
+                                    self.handle_measure_error(f"Не задан параметр для команды {self.SPEC_CMD_READ_DELAY}")
+
+                                if not cmd.endswith("?"):
+                                    self.wait_timer.start(self.GNRW_SYNC_DELAY_S)
+
+                            elif cmd == self.SPEC_CMD_WAIT:
+                                if param is not None:
+                                    self.wait_timer.start(int(param))
+                                else:
+                                    self.handle_measure_error(f"Не задан параметр для команды {self.SPEC_CMD_WAIT}")
+
+                            else:
+                                tek.send_cmd(self.spec, current_cmd)
+                                if cmd == "*OPC":
+                                    self.tek_status = self.TekStatus.WAIT_OPC
+
+                                elif "?" in cmd:
+                                    if cmd in (":READ:SPEC?", ":READ:SPECtrum?"):
+                                        self.tek_status = self.TekStatus.WAIT_BYTES
+                                    else:
+                                        self.tek_status = self.TekStatus.WAIT_STRING
+
+                                    try:
+                                        delay_before_read = self.get_cmd_delay_before_read(self.current_cmd_queue)
+                                        self.wait_timer.start(delay_before_read)
+                                    except ValueError:
+                                        self.handle_measure_error(f"Не задан параметр для команды {self.SPEC_CMD_READ_DELAY}")
                     else:
                         try:
                             self.current_measure_name, self.current_cmd_queue = next(self.cmd_queue_gen)
@@ -224,18 +261,36 @@ class MeasureConductor(QtCore.QObject):
                     else:
                         self.wait_timer.start(self.OPC_POLL_DELAY_S)
 
-    def send_cmd(self, a_cmd: str, a_read_bytes: bool = False) -> bool:
-        result = False
-        if a_cmd:
-            cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
-            if cmd_description:
-                if tek.send_cmd(self.spec, a_cmd) and "?" in a_cmd:
-                    self.tek_status = self.TekStatus.WAIT_BYTES if a_read_bytes else self.TekStatus.WAIT_STRING
-                    result = True
-            else:
-                logging.error("Неверная команда")
+    def gnrw_send_cmd(self, a_cmd, a_param):
+        gnrw_command = a_cmd.split(':')[2]
+        wrong_param_error = False
 
-        return result
+        if gnrw_command == self.GNRW_CMD_ENABLE:
+            if a_param in ('ON', "1"):
+                self.pokrov.signal_on(True)
+            elif a_param in ('OFF', "0"):
+                self.pokrov.signal_on(False)
+            else:
+                wrong_param_error = True
+        elif a_cmd.endswith("?"):
+            if gnrw_command == self.GNRW_CMD_LINE_ASK:
+                logging.info(self.pokrov.line_power)
+            if gnrw_command == self.GNRW_CMD_RADIO_ASK:
+                logging.info(self.pokrov.ether_power)
+        else:
+            try:
+                param_value = int(a_param)
+            except (ValueError, TypeError):
+                wrong_param_error = True
+            else:
+                if gnrw_command == self.GNRW_CMD_RADIO:
+                    self.pokrov.ether_power = param_value
+                elif gnrw_command == self.GNRW_CMD_LINE:
+                    self.pokrov.line_power = param_value
+
+        if wrong_param_error:
+            logging.error(f'Команда "{a_cmd}" - неверный параметр "{a_param}"')
+
 
     @staticmethod
     def byte_to_char(a_bytes: bytes, a_index: int) -> str:

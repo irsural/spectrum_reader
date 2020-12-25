@@ -30,11 +30,6 @@ class CmdCase(IntEnum):
     LOWER = 1
 
 
-class SpecCmd:
-    WAIT = ":WAIT"
-    READ_DELAY = ":READ_DELAY"
-
-
 def get_commands_three(a_cmd_case: CmdCase):
     commands = {}
     description_node_name = "desc"

@@ -158,8 +158,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @staticmethod
     def add_extra_commands(a_cmd_tree: dict):
-        a_cmd_tree[":WAIT"] = {"desc": "Wait N seconds"}
-        a_cmd_tree[":READ_DELAY"] = {"desc": "Wait N seconds before reading the answer"}
+        a_cmd_tree[MeasureConductor.SPEC_CMD_WAIT] = {"desc": "Wait N seconds"}
+        a_cmd_tree[MeasureConductor.SPEC_CMD_READ_DELAY] = {"desc": "Wait N seconds before reading the answer"}
+        a_cmd_tree[MeasureConductor.GNRW_COMMANDS_NODE_NAME] = MeasureConductor.GNRW_COMMANDS_TREE
 
     def sa_connect_button_clicked(self):
         self.settings.sa_ip = self.ui.sa_ip_edit.text()

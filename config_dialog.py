@@ -76,7 +76,7 @@ class ConfigDialog(QtWidgets.QDialog):
         cmd = self.ui.cmd_edit.text()
         if cmd:
             cmd_description = tek.get_cmd_description(cmd.split(" ")[0], self.cmd_tree)
-            if cmd_description or cmd.split(" ")[0] in (tek.SpecCmd.WAIT, tek.SpecCmd.READ_DELAY):
+            if cmd_description:
                 item = QtWidgets.QListWidgetItem(cmd)
                 self.ui.cmd_list_widget.insertItem(self.ui.cmd_list_widget.currentRow() + 1, item)
                 self.ui.cmd_list_widget.setCurrentItem(item)
