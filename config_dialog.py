@@ -1,8 +1,10 @@
+import logging
 import json
 
 from PyQt5 import QtGui, QtWidgets, QtCore
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
+from editable_qtabbar import EditableQTabBar
 
 from ui.py.config_dialog import Ui_config_dialog as ConfigForm
 from tekvisa_qcompleter import CmdCompleter
@@ -51,6 +53,7 @@ class ConfigDialog(QtWidgets.QDialog):
 
         self.settings = a_settings
         self.settings.restore_qwidget_state(self)
+        self.settings.restore_qwidget_state(self.ui.config_dialog_splitter)
 
         self.cmd_tree = a_cmd_tree
 
@@ -62,15 +65,30 @@ class ConfigDialog(QtWidgets.QDialog):
         cmd_completer.setModelSorting(QtWidgets.QCompleter.CaseSensitivelySortedModel)
         self.ui.cmd_edit.setCompleter(cmd_completer)
 
+        self.tab_bar = EditableQTabBar(self)
+        self.ui.devices_bar_layout.addWidget(self.tab_bar.widget())
+        self.tab_bar.tab_added.connect(self.new_device_response_added)
+        self.tab_bar.tab_deleted.connect(self.device_response_deleted)
+        self.tab_bar.tab_changed.connect(self.device_response_selected)
+
         self.ui.add_cmd_button.clicked.connect(self.add_cmd_button_clicked)
         self.ui.remove_cmd_button.clicked.connect(self.remove_cmd_button_clicked)
-        self.ui.load_from_file_button.clicked.connect(self.load_from_file_button_clicked)
-        self.ui.save_to_file_button.clicked.connect(self.save_to_file_button_clicked)
+        self.ui.load_script_from_file_button.clicked.connect(self.load_script_from_file_button_clicked)
+        self.ui.save_script_to_file_button.clicked.connect(self.save_script_to_file_button_clicked)
 
         self.ui.cmd_list_widget.currentItemChanged.connect(self.current_list_item_changed)
 
         self.ui.ok_button.clicked.connect(self.accept)
         self.ui.cancel_button.clicked.connect(self.reject)
+
+    def new_device_response_added(self, a_idx: int):
+        logging.debug(f"Tab {a_idx} added")
+
+    def device_response_deleted(self, a_idx: int):
+        logging.debug(f"Tab {a_idx} deleted")
+
+    def device_response_selected(self, a_idx: int):
+        logging.debug(f"Tab {a_idx} selected")
 
     def add_cmd_button_clicked(self):
         cmd = self.ui.cmd_edit.text()
@@ -88,7 +106,7 @@ class ConfigDialog(QtWidgets.QDialog):
     def remove_cmd_button_clicked(self):
         self.ui.cmd_list_widget.takeItem(self.ui.cmd_list_widget.currentRow())
 
-    def load_from_file_button_clicked(self):
+    def load_script_from_file_button_clicked(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка конфигурации", "",
                                                             "Конфигурация TektronixControl (*.tcc)")
         if filename:
@@ -98,7 +116,7 @@ class ConfigDialog(QtWidgets.QDialog):
                 for config_row in config_data:
                     self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(config_row))
 
-    def save_to_file_button_clicked(self):
+    def save_script_to_file_button_clicked(self):
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохренение конфигурации", "",
                                                             "Конфигурация TektronixControl (*.tcc)")
         if filename:
@@ -118,4 +136,5 @@ class ConfigDialog(QtWidgets.QDialog):
         print("ConfigDialog deleted")
 
     def closeEvent(self, a_event: QtGui.QCloseEvent) -> None:
+        self.settings.save_qwidget_state(self.ui.config_dialog_splitter)
         self.settings.save_qwidget_state(self)

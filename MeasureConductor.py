@@ -291,7 +291,6 @@ class MeasureConductor(QtCore.QObject):
         if wrong_param_error:
             logging.error(f'Команда "{a_cmd}" - неверный параметр "{a_param}"')
 
-
     @staticmethod
     def byte_to_char(a_bytes: bytes, a_index: int) -> str:
         return str(a_bytes[a_index:a_index + 1], encoding="ascii")
