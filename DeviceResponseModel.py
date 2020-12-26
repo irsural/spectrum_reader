@@ -21,7 +21,7 @@ class DeviceResponseModel(QtCore.QAbstractTableModel):
     HEADER_COLOR = QColor(209, 230, 255)
     TABLE_COLOR = QColor(255, 255, 255)
 
-    HZ_UNITS = "Гц"
+    HZ_UNITS = "МГц"
     DB_UNITS = "дБ?"
 
     DISPLAY_DATA_PRECISION = 3
@@ -60,7 +60,8 @@ class DeviceResponseModel(QtCore.QAbstractTableModel):
     def serialize_to_dict(self):
         data_dict = {
             "name": self.__name,
-            "row_count": self.rowCount() - 1,
+            "row_count": self.rowCount() - 1
+            ,
             "column_count": self.columnCount(),
             "cells": self.__serialize_cells_to_dict(),
         }
@@ -198,8 +199,7 @@ class DeviceResponseModel(QtCore.QAbstractTableModel):
             cell_value = self.__cells[index.row()][index.column()]
 
             if role == Qt.DisplayRole:
-                value = utils.float_to_string(
-                    cell_value, self.get_display_precision(cell_value, self.DISPLAY_DATA_PRECISION))
+                value = utils.float_to_string(cell_value, self.DISPLAY_DATA_PRECISION)
             else:  # role == Qt.EditRole
                 value = utils.float_to_string(cell_value, a_precision=self.EDIT_DATA_PRECISION)
 

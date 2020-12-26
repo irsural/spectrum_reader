@@ -6,7 +6,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForView
 from irspy.qt.qt_settings_ini_parser import QtSettings
-from editable_qtabbar import EditableQTabBar
+from irspy.qt.custom_widgets.editable_qtabbar import EditableQTabBar
 
 from ui.py.config_dialog import Ui_config_dialog as ConfigForm
 from DeviceResponseModel import DeviceResponseModel
@@ -15,9 +15,10 @@ import tekvisa_control as tek
 
 
 class TekConfig:
-    def __init__(self, a_cmd_list=None, a_device_responses=None, a_enable=False):
+    def __init__(self, a_cmd_list=None, a_device_responses=None, a_normalizing_coef=0., a_enable=False):
         self._cmd_list = [] if a_cmd_list is None else a_cmd_list
         self._device_responses: Dict[str, List[List[float]]] = {} if a_device_responses is None else a_device_responses
+        self._normalizing_coef = a_normalizing_coef
         self._enable = a_enable
 
     def cmd_list(self):
@@ -32,6 +33,12 @@ class TekConfig:
     def set_device_responses(self, a_device_responses):
         self._device_responses = a_device_responses
 
+    def normalize_coef(self):
+        return self._normalizing_coef
+
+    def set_normalize_coef(self, a_value):
+        self._normalizing_coef = a_value
+
     def is_enabled(self):
         return self._enable
 
@@ -42,6 +49,7 @@ class TekConfig:
         return {
             "cmd_list": self._cmd_list,
             "device_responses": self._device_responses,
+            "normalizing_coef": self._normalizing_coef,
             "enable": self._enable,
         }
 
@@ -49,9 +57,9 @@ class TekConfig:
     def from_dict(cls, a_dict: dict):
         cmd_list = a_dict["cmd_list"]
         device_responses = a_dict["device_responses"]
+        normalizing_coef = a_dict["normalizing_coef"]
         enable = a_dict["enable"]
-        return cls(cmd_list, device_responses, enable)
-        # return cls(cmd_list, None, enable)
+        return cls(cmd_list, device_responses, normalizing_coef, enable)
 
 
 class ConfigDialog(QtWidgets.QDialog):
@@ -93,6 +101,8 @@ class ConfigDialog(QtWidgets.QDialog):
 
         self.tab_bar.widget().setCurrentIndex(0)
         self.device_response_selected(0)
+
+        self.ui.normalize_coef_spinbox.setValue(a_config.normalize_coef())
 
         self.ui.add_cmd_button.clicked.connect(self.add_cmd_button_clicked)
         self.ui.remove_cmd_button.clicked.connect(self.remove_cmd_button_clicked)
@@ -209,6 +219,9 @@ class ConfigDialog(QtWidgets.QDialog):
 
     def get_device_responses(self) -> Dict[str, List[List[float]]]:
         return {dr.get_name(): dr.get_table() for dr in self.device_responses}
+
+    def get_normalize_coef(self):
+        return self.ui.normalize_coef_spinbox.value()
 
     def current_list_item_changed(self, a_item: QtWidgets.QTableWidgetItem, _):
         if a_item is not None:
