@@ -1,20 +1,23 @@
+from typing import Dict, List, Optional
 import logging
 import json
 
 from PyQt5 import QtGui, QtWidgets, QtCore
 
+from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForView
 from irspy.qt.qt_settings_ini_parser import QtSettings
 from editable_qtabbar import EditableQTabBar
 
 from ui.py.config_dialog import Ui_config_dialog as ConfigForm
+from DeviceResponseModel import DeviceResponseModel
 from tekvisa_qcompleter import CmdCompleter
 import tekvisa_control as tek
 
 
 class TekConfig:
-
-    def __init__(self, a_cmd_list=None, a_enable=False):
+    def __init__(self, a_cmd_list=None, a_device_responses=None, a_enable=False):
         self._cmd_list = [] if a_cmd_list is None else a_cmd_list
+        self._device_responses: Dict[str, List[List[float]]] = {} if a_device_responses is None else a_device_responses
         self._enable = a_enable
 
     def cmd_list(self):
@@ -22,6 +25,12 @@ class TekConfig:
 
     def set_cmd_list(self, a_cmd_list: list):
         self._cmd_list = a_cmd_list
+
+    def get_device_responses(self):
+        return self._device_responses
+
+    def set_device_responses(self, a_device_responses):
+        self._device_responses = a_device_responses
 
     def is_enabled(self):
         return self._enable
@@ -32,14 +41,17 @@ class TekConfig:
     def to_dict(self):
         return {
             "cmd_list": self._cmd_list,
-            "enable": self._enable
+            "device_responses": self._device_responses,
+            "enable": self._enable,
         }
 
     @classmethod
     def from_dict(cls, a_dict: dict):
         cmd_list = a_dict["cmd_list"]
+        device_responses = a_dict["device_responses"]
         enable = a_dict["enable"]
-        return cls(cmd_list, enable)
+        return cls(cmd_list, device_responses, enable)
+        # return cls(cmd_list, None, enable)
 
 
 class ConfigDialog(QtWidgets.QDialog):
@@ -57,6 +69,10 @@ class ConfigDialog(QtWidgets.QDialog):
 
         self.cmd_tree = a_cmd_tree
 
+        self.ui.device_response_table.setItemDelegate(TransparentPainterForView(self.ui.device_response_table, "#d4d4ff"))
+        self.device_responses: List[DeviceResponseModel] = []
+        self.current_device_response: Optional[None, DeviceResponseModel] = None
+
         for cmd in a_config.cmd_list():
             self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(cmd))
 
@@ -71,6 +87,13 @@ class ConfigDialog(QtWidgets.QDialog):
         self.tab_bar.tab_deleted.connect(self.device_response_deleted)
         self.tab_bar.tab_changed.connect(self.device_response_selected)
 
+        for idx, (dr_name, dr_table) in enumerate(a_config.get_device_responses().items()):
+            self.tab_bar.add_tab_with_name(dr_name)
+            self.device_responses[idx] = DeviceResponseModel(dr_name, dr_table)
+
+        self.tab_bar.widget().setCurrentIndex(0)
+        self.device_response_selected(0)
+
         self.ui.add_cmd_button.clicked.connect(self.add_cmd_button_clicked)
         self.ui.remove_cmd_button.clicked.connect(self.remove_cmd_button_clicked)
         self.ui.load_script_from_file_button.clicked.connect(self.load_script_from_file_button_clicked)
@@ -78,17 +101,50 @@ class ConfigDialog(QtWidgets.QDialog):
 
         self.ui.cmd_list_widget.currentItemChanged.connect(self.current_list_item_changed)
 
+        self.ui.add_row_button.clicked.connect(self.add_row)
+        self.ui.delete_row_button.clicked.connect(self.delete_row)
+
+        self.ui.load_response_from_file_button.clicked.connect(self.load_device_responses_button_clicked)
+        self.ui.save_response_to_file_button.clicked.connect(self.save_device_responses_button_clicked)
+
         self.ui.ok_button.clicked.connect(self.accept)
         self.ui.cancel_button.clicked.connect(self.reject)
 
+    def add_row(self):
+        if self.current_device_response is not None:
+            selection = self.ui.device_response_table.selectionModel().selectedIndexes()
+            if selection:
+                row = max(selection, key=lambda idx: idx.row()).row() + 1
+            else:
+                row = self.current_device_response.rowCount()
+            self.current_device_response.add_row(row)
+            self.ui.device_response_table.resizeRowsToContents()
+
+    def delete_row(self):
+        if self.current_device_response is not None:
+            # Множество для удаления дубликатов
+            removing_rows = list(set(index.row() for index in self.ui.device_response_table.selectionModel().selectedIndexes()))
+            removing_rows.sort()
+            for row in reversed(removing_rows):
+                self.current_device_response.remove_row(row)
+
     def new_device_response_added(self, a_idx: int):
-        logging.debug(f"Tab {a_idx} added")
+        name = self.tab_bar.widget().tabText(a_idx)
+        new_model = DeviceResponseModel(a_name=name)
+        new_model.add_column(1)
+        self.device_responses.append(new_model)
 
     def device_response_deleted(self, a_idx: int):
-        logging.debug(f"Tab {a_idx} deleted")
+        self.device_responses.pop(a_idx)
+        if not self.device_responses:
+            self.current_device_response = None
+            self.ui.device_response_table.setModel(self.current_device_response)
 
     def device_response_selected(self, a_idx: int):
-        logging.debug(f"Tab {a_idx} selected")
+        if self.device_responses:
+            self.current_device_response = self.device_responses[a_idx]
+            self.ui.device_response_table.setModel(self.current_device_response)
+            self.ui.device_response_table.resizeRowsToContents()
 
     def add_cmd_button_clicked(self):
         cmd = self.ui.cmd_edit.text()
@@ -106,9 +162,32 @@ class ConfigDialog(QtWidgets.QDialog):
     def remove_cmd_button_clicked(self):
         self.ui.cmd_list_widget.takeItem(self.ui.cmd_list_widget.currentRow())
 
+    def load_device_responses_button_clicked(self):
+        if self.current_device_response:
+            filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка характеристики устройства", "",
+                                                                "Файлы характеристики устройства (*.dr)")
+            if filename:
+                with open(filename, 'r') as file:
+                    dr_data = json.loads(file.read())
+                    idx = self.tab_bar.widget().currentIndex()
+
+                    self.device_responses[idx] = DeviceResponseModel.from_dict(dr_data)
+                    self.device_response_selected(idx)
+                    self.tab_bar.widget().setTabText(idx, self.current_device_response.get_name())
+
+    def save_device_responses_button_clicked(self):
+        if self.current_device_response:
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохренение характеристики устройства", "",
+                                                                "Файлы характеристики устройства (*.dr)")
+            if filename:
+                device_responses = self.current_device_response.serialize_to_dict()
+                config_data = json.dumps(device_responses, indent=4, ensure_ascii=False)
+                with open(filename, "w") as file:
+                    file.write(config_data)
+
     def load_script_from_file_button_clicked(self):
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка конфигурации", "",
-                                                            "Конфигурация TektronixControl (*.tcc)")
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка сценария выполнения", "",
+                                                            "Сценарии выполнения (*.es)")
         if filename:
             with open(filename, 'r') as file:
                 config_data = json.loads(file.read())
@@ -117,8 +196,8 @@ class ConfigDialog(QtWidgets.QDialog):
                     self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(config_row))
 
     def save_script_to_file_button_clicked(self):
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохренение конфигурации", "",
-                                                            "Конфигурация TektronixControl (*.tcc)")
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохренение сценария выполнения", "",
+                                                            "Сценарии выполнения (*.es)")
         if filename:
             cmd_list = [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
             config_data = json.dumps(cmd_list, indent=4, ensure_ascii=False)
@@ -127,6 +206,9 @@ class ConfigDialog(QtWidgets.QDialog):
 
     def get_cmd_list(self):
         return [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
+
+    def get_device_responses(self) -> Dict[str, List[List[float]]]:
+        return {dr.get_name(): dr.get_table() for dr in self.device_responses}
 
     def current_list_item_changed(self, a_item: QtWidgets.QTableWidgetItem, _):
         if a_item is not None:

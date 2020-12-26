@@ -138,6 +138,7 @@ class MeasureManager(QtCore.QObject):
         config_dialog = ConfigDialog(config, self.cmd_tree, self.settings, self.parent())
         if config_dialog.exec() == QtWidgets.QDialog.Accepted:
             self.measures[measure_name].set_cmd_list(config_dialog.get_cmd_list())
+            self.measures[measure_name].set_device_responses(config_dialog.get_device_responses())
             self.save_config()
         config_dialog.close()
 
