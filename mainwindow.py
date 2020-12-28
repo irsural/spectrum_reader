@@ -49,14 +49,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
             self.ui.sa_ip_edit.setText(self.settings.sa_ip)
             self.ui.gnrw_ip_edit.setText(self.settings.gnrw_ip)
+            self.ui.points_count_spinbox.setValue(self.settings.graph_points_count)
             self.gnrw_state_changed(False, 0)
 
             self.graph_widget = pyqtgraph.PlotWidget()
             self.init_graph(self.graph_widget)
 
-            self.ui.tip_full_cmd_checkbox.setChecked(self.settings.tip_full_cmd)
-            cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
-            self.cmd_tree = tek.get_commands_three(cmd_case)
+            self.cmd_tree = tek.get_commands_three(tek.CmdCase.UPPER)
             self.add_extra_commands(self.cmd_tree)
             self.set_completer(self.cmd_tree)
 
@@ -104,7 +103,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.gnrw_connect_button.clicked.connect(self.gnrw_connect_button_clicked)
         self.ui.read_specter_button.clicked.connect(self.read_specter_button_clicked)
 
-        self.ui.tip_full_cmd_checkbox.toggled.connect(self.tip_full_cmd_checkbox_toggled)
         self.ui.cmd_edit.textChanged.connect(self.cmd_edit_text_changed)
 
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
@@ -115,6 +113,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.log_scale_checkbox.toggled.connect(self.log_scale_checkbox_toggled)
         self.ui.csv_import_button.clicked.connect(self.csv_import_button_clicked)
+        self.ui.points_count_spinbox.editingFinished.connect(self.graph_points_count_changed)
+
+        self.measure_conductor.graph_points_count_changed.connect(self.set_graph_points_count)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -137,7 +138,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def lock_interface(self, a_lock: bool):
         self.ui.sa_connect_button.setDisabled(a_lock)
         self.ui.gnrw_connect_button.setDisabled(a_lock)
-        self.ui.tip_full_cmd_checkbox.setDisabled(a_lock)
         self.ui.send_cmd_button.setDisabled(a_lock)
         self.ui.idn_button.setDisabled(a_lock)
         self.ui.error_buttons.setDisabled(a_lock)
@@ -262,6 +262,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 graph_color = MeasureConductor.GRAPH_COLORS[i % len(MeasureConductor.GRAPH_COLORS)]
                 graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
                 self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
+
+    def graph_points_count_changed(self):
+        if self.ui.points_count_spinbox.value() != self.settings.graph_points_count:
+            self.measure_conductor.set_graph_points_count(self.ui.points_count_spinbox.value())
+            self.settings.graph_points_count = self.ui.points_count_spinbox.value()
+
+    def set_graph_points_count(self, a_points_count: int):
+        self.ui.points_count_spinbox.setValue(a_points_count)
 
     def open_about(self):
         about_dialog = AboutDialog(self)

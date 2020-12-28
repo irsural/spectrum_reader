@@ -4,6 +4,7 @@ from decimal import Decimal
 from enum import IntEnum
 import logging
 import struct
+import bisect
 import math
 
 from PyQt5 import QtCore
@@ -40,6 +41,7 @@ class MeasureConductor(QtCore.QObject):
 
     tektronix_is_ready = QtCore.pyqtSignal()
     gnrw_state_changed = QtCore.pyqtSignal(bool, int)
+    graph_points_count_changed = QtCore.pyqtSignal(int)
 
     DEFAULT_CMD_DELAY_S = 0
     OPC_POLL_DELAY_S = 1
@@ -355,8 +357,32 @@ class MeasureConductor(QtCore.QObject):
                 y_start = min((a_spec_params.y_start, y_min))
                 y_stop = max((a_spec_params.y_stop, y_max))
                 self.graph_widget.setYRange(y_start, y_stop)
+
+                self.graph_points_count_changed.emit(len(y_data))
         else:
             logging.error("Неверные данные для построения графика спектра")
+
+    def set_graph_points_count(self, a_points_count):
+        if self.graphs_data:
+            for graph_number, (_, (x_data, y_data)) in enumerate(self.graphs_data.items()):
+                if x_data:
+                    if a_points_count > len(x_data):
+                        a_points_count = len(x_data)
+                        logging.warning(f"Количество точек на графике = {len(x_data)}")
+
+                    new_data_indices = []
+                    factor = (x_data[-1] / x_data[0]) ** (1 / (a_points_count - 1))
+                    x = x_data[0]
+                    for i in range(1, a_points_count + 1):
+                        idx = bisect.bisect_right(x_data, x) - 1
+                        new_data_indices.append(idx)
+                        x *= factor
+
+                    new_x_data = [x_data[i] for i in new_data_indices]
+                    new_y_data = [y_data[i] for i in new_data_indices]
+
+                    plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
+                    plot_data_item.setData(x=new_x_data, y=new_y_data)
 
     def get_next_cmd_deque(self) -> Tuple[str, deque]:
         for name, cmd_list in self.current_commands.items():
@@ -385,6 +411,7 @@ class MeasureConductor(QtCore.QObject):
             self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
     def start(self, a_commands: Dict[str, List], a_save_folder=""):
+        self.reset()
         if a_commands:
             if tek.check_connection(self.spec):
                 self.current_commands = a_commands
@@ -405,4 +432,4 @@ class MeasureConductor(QtCore.QObject):
         return self.started
 
     def stop(self):
-        self.reset()
+        self.started = False
