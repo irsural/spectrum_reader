@@ -316,9 +316,10 @@ class MeasureConductor(QtCore.QObject):
 
         return float_data
 
-    def normalize_spectrum_data(self, a_data: List[float], a_rbw_hz: float) -> List[float]:
+    def normalize_spectrum_data(self, a_amplitudes: List[float], a_frequencies: List[float], a_rbw_hz: float) -> List[float]:
         coef = 10 * math.log(a_rbw_hz / 1000., 10)
-        return [d + self.current_config.normalize_coef() - coef for d in a_data]
+        return [a + self.current_config.total_device_response(f / 1e6) - coef + self.current_config.normalize_coef()
+                for a, f in zip(a_amplitudes, a_frequencies)]
 
     @staticmethod
     def calculate_x_points(a_x_start: float, a_x_stop: float, a_x_count: int) -> List[float]:
@@ -332,9 +333,10 @@ class MeasureConductor(QtCore.QObject):
 
     def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters, a_graph_number: int):
         if self.byte_to_char(a_data, 0) == '#':
-            amplitudes = self.extract_spectrum_data(a_data)
-            amplitudes = self.normalize_spectrum_data(amplitudes, a_spec_params.rbw)
-            frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(amplitudes))
+            spec_data = self.extract_spectrum_data(a_data)
+
+            frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(spec_data))
+            amplitudes = self.normalize_spectrum_data(spec_data, frequencies, a_spec_params.rbw)
 
             try:
                 x_data, y_data = self.graphs_data[a_graph_number]

@@ -158,4 +158,4 @@ class MeasureManager(QtCore.QObject):
             assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
 
     def get_enabled_configs(self) -> List[Tuple[str, MeasureConfig]]:
-        return [(name, copy.deepcopy(config)) for name, config in self.measures.items() if config.is_enabled()]
+        return [(name, config) for name, config in self.measures.items() if config.is_enabled()]

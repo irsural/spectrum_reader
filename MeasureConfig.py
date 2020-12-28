@@ -33,13 +33,15 @@ class MeasureConfig:
             spline.set_points([p[0] for p in dr_table], [p[1] for p in dr_table])
             self.__pchip_splines.append(spline)
 
-    def total_devices_response(self, a_frequencies: List[float]):
-        total_responses = [0.] * len(a_frequencies)
-        for idx, frequency in enumerate(a_frequencies):
-            for spline in self.__pchip_splines:
-                total_responses[idx] += spline.interpolate(frequency)
-
-        return total_responses
+    def total_device_response(self, a_frequency_mhz: float):
+        """
+        Возвращает суммарный отклик всех устройств на частоте a_frequency
+        :param a_frequency_mhz: Частота, в МГц !!
+        """
+        total_response = 0.
+        for spline in self.__pchip_splines:
+            total_response += spline.interpolate(a_frequency_mhz)
+        return total_response
 
     def normalize_coef(self):
         return self._normalizing_coef

@@ -105,6 +105,8 @@ class Ui_config_dialog(object):
         sizePolicy.setHeightForWidth(self.device_response_table.sizePolicy().hasHeightForWidth())
         self.device_response_table.setSizePolicy(sizePolicy)
         self.device_response_table.setObjectName("device_response_table")
+        self.device_response_table.horizontalHeader().setStretchLastSection(True)
+        self.device_response_table.verticalHeader().setVisible(False)
         self.verticalLayout_5.addWidget(self.device_response_table)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setContentsMargins(-1, 6, -1, -1)
