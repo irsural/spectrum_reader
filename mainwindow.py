@@ -181,19 +181,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.gnrw_status_label.setPixmap(pixmap.scaled(20, 20, QtCore.Qt.KeepAspectRatio))
 
     def send_button_clicked(self):
-        if self.measure_conductor.start({"Send cmd": [self.ui.cmd_edit.text()]}):
+        if self.measure_conductor.exec_cmd(self.ui.cmd_edit.text()):
             self.lock_interface(True)
 
     def idn_button_clicked(self):
-        if self.measure_conductor.start({"IDN": ["*IDN?"]}):
+        if self.measure_conductor.exec_cmd("*IDN?"):
             self.lock_interface(True)
 
     def errors_button_clicked(self):
-        if self.measure_conductor.start({"Errors": [":SYST:ERR:ALL?"]}):
+        if self.measure_conductor.exec_cmd(":SYST:ERR:ALL?"):
             self.lock_interface(True)
 
     def read_specter_button_clicked(self):
-        if self.measure_conductor.start({"Спектр": [":READ:SPEC?"]}, self.ui.measure_path_edit.text()):
+        if self.measure_conductor.exec_cmd(":READ:SPEC?"):
             self.lock_interface(True)
 
     def tip_full_cmd_checkbox_toggled(self, a_enable):
@@ -227,8 +227,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
-        cmd_list = self.measure_manager.get_enabled_configs()
-        if self.measure_conductor.start(cmd_list, self.ui.measure_path_edit.text()):
+        configs = self.measure_manager.get_enabled_configs()
+        if self.measure_conductor.start(configs, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
 
     def stop_measure_button_clicked(self):

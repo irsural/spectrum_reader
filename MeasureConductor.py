@@ -7,14 +7,15 @@ import struct
 import bisect
 import math
 
-from PyQt5 import QtCore
 from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
+from PyQt5 import QtCore
 from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
 from irspy.pokrov import pokrov_dll
 
 import tekvisa_control as tek
+from config_dialog import TekConfig
 
 
 class SpecterParameters:
@@ -91,8 +92,9 @@ class MeasureConductor(QtCore.QObject):
         self.cmd_tree = a_cmd_tree
 
         self.started = False
-        self.current_commands = {}
-        self.cmd_queue_gen = None
+        self.current_configs = []
+        self.configs_gen = None
+        self.current_config: Optional[None, TekConfig] = None
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
@@ -112,8 +114,9 @@ class MeasureConductor(QtCore.QObject):
 
     def reset(self):
         self.started = False
-        self.current_commands = {}
-        self.cmd_queue_gen = None
+        self.current_configs = []
+        self.configs_gen = None
+        self.current_config = None
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
@@ -167,11 +170,11 @@ class MeasureConductor(QtCore.QObject):
     def get_cmd_delay_before_read(self, a_cmd_queue: deque) -> int:
         delay = 0
         if a_cmd_queue:
-            next_cmd, next_param = self.parse_cmd(a_cmd_queue[-1])
+            next_cmd, next_param = self.parse_cmd(a_cmd_queue[0])
             if next_cmd == self.SPEC_CMD_READ_DELAY:
                 if next_param is not None:
                     # Убираем из очереди, т.к. это фиктивная команда
-                    a_cmd_queue.pop()
+                    a_cmd_queue.popleft()
                     logging.debug(f"Read delay {next_param} sec")
                     delay = int(next_param)
                 else:
@@ -194,7 +197,7 @@ class MeasureConductor(QtCore.QObject):
             if self.wait_timer.check():
                 if self.tek_status == self.TekStatus.READY:
                     if self.current_cmd_queue:
-                        current_cmd = self.current_cmd_queue.pop()
+                        current_cmd = self.current_cmd_queue.popleft()
                         cmd, param = self.parse_cmd(current_cmd)
 
                         if cmd:
@@ -237,7 +240,8 @@ class MeasureConductor(QtCore.QObject):
                                         self.handle_measure_error(f"Не задан параметр для команды {self.SPEC_CMD_READ_DELAY}")
                     else:
                         try:
-                            self.current_measure_name, self.current_cmd_queue = next(self.cmd_queue_gen)
+                            self.current_measure_name, self.current_config = next(self.configs_gen)
+                            self.current_cmd_queue = deque(self.current_config.cmd_list())
                             self.current_graph = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
@@ -384,11 +388,9 @@ class MeasureConductor(QtCore.QObject):
                     plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
                     plot_data_item.setData(x=new_x_data, y=new_y_data)
 
-    def get_next_cmd_deque(self) -> Tuple[str, deque]:
-        for name, cmd_list in self.current_commands.items():
-            cmd_deque = deque(cmd_list)
-            cmd_deque.reverse()
-            yield name, cmd_deque
+    def get_next_config_deque(self) -> Tuple[str, deque]:
+        for name, config in self.current_configs:
+            yield name, config
 
     def save_results(self, a_filename):
         if self.save_folder and self.graph_widget.plotItem.listDataItems():
@@ -410,13 +412,14 @@ class MeasureConductor(QtCore.QObject):
 
             self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
-    def start(self, a_commands: Dict[str, List], a_save_folder=""):
+    def start(self, a_configs: List[Tuple[str, TekConfig]], a_save_folder=""):
         self.reset()
-        if a_commands:
+        if a_configs:
             if tek.check_connection(self.spec):
-                self.current_commands = a_commands
-                self.cmd_queue_gen = self.get_next_cmd_deque()
-                self.current_measure_name, self.current_cmd_queue = next(self.cmd_queue_gen)
+                self.current_configs = a_configs
+                self.configs_gen = self.get_next_config_deque()
+                self.current_measure_name, self.current_config = next(self.configs_gen)
+                self.current_cmd_queue = deque(self.current_config.cmd_list())
                 self.wait_timer.start(0)
                 self.tek_status = self.TekStatus.READY
                 self.save_folder = a_save_folder
@@ -430,6 +433,10 @@ class MeasureConductor(QtCore.QObject):
                 logging.error("Не удалось установить соединение, необходимо вручную сбросить "
                               "Remote Interface на спектроанализаторе")
         return self.started
+
+    def exec_cmd(self, a_cmd: str):
+        config = [("Last command", TekConfig(a_cmd_list=[a_cmd]))]
+        return self.start(config)
 
     def stop(self):
         self.started = False

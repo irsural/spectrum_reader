@@ -84,7 +84,7 @@ class Ui_MainWindow(object):
         self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_3.setObjectName("frame_3")
         self.gridLayout_3 = QtWidgets.QGridLayout(self.frame_3)
-        self.gridLayout_3.setContentsMargins(0, 0, 0, 6)
+        self.gridLayout_3.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_3.setSpacing(6)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
@@ -259,8 +259,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.csv_import_button.setText(_translate("MainWindow", "Импорт из CSV"))
-        self.label.setText(_translate("MainWindow", "Количество точек\n"
-"на графике"))
+        self.label.setText(_translate("MainWindow", "Количество точек на графике"))
         self.log_scale_checkbox.setText(_translate("MainWindow", "Логарифм. шкала"))
         self.idn_button.setText(_translate("MainWindow", "*IDN?"))
         self.error_buttons.setText(_translate("MainWindow", "Ошибки"))

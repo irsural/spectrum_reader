@@ -1,6 +1,7 @@
-from typing import Union, Dict, List, Tuple
+from typing import Dict, List, Tuple
 from enum import IntEnum
 import logging
+import copy
 import json
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -156,10 +157,5 @@ class MeasureManager(QtCore.QObject):
         else:
             assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
 
-    def get_enabled_configs(self):
-        enabled_configs = OrderedDictInsert()
-
-        for name, config in self.measures.items():
-            if self.measures[name].is_enabled():
-                enabled_configs[name] = config.cmd_list()
-        return enabled_configs
+    def get_enabled_configs(self) -> List[Tuple[str, TekConfig]]:
+        return [(name, copy.deepcopy(config)) for name, config in self.measures.items() if config.is_enabled()]
