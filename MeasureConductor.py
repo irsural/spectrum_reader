@@ -15,7 +15,7 @@ from irspy.utils import Timer, value_to_user_with_units
 from irspy.pokrov import pokrov_dll
 
 import tekvisa_control as tek
-from config_dialog import TekConfig
+from MeasureConfig import MeasureConfig
 
 
 class SpecterParameters:
@@ -94,7 +94,7 @@ class MeasureConductor(QtCore.QObject):
         self.started = False
         self.current_configs = []
         self.configs_gen = None
-        self.current_config: Optional[None, TekConfig] = None
+        self.current_config: Optional[None, MeasureConfig] = None
         self.current_cmd_queue: Optional[None, deque] = None
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
@@ -316,10 +316,9 @@ class MeasureConductor(QtCore.QObject):
 
         return float_data
 
-    @staticmethod
-    def normalize_spectrum_data(a_data: List[float], a_rbw_hz: float) -> List[float]:
+    def normalize_spectrum_data(self, a_data: List[float], a_rbw_hz: float) -> List[float]:
         coef = 10 * math.log(a_rbw_hz / 1000., 10)
-        return [d - coef for d in a_data]
+        return [d + self.current_config.normalize_coef() - coef for d in a_data]
 
     @staticmethod
     def calculate_x_points(a_x_start: float, a_x_stop: float, a_x_count: int) -> List[float]:
@@ -412,7 +411,7 @@ class MeasureConductor(QtCore.QObject):
 
             self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
-    def start(self, a_configs: List[Tuple[str, TekConfig]], a_save_folder=""):
+    def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder=""):
         self.reset()
         if a_configs:
             if tek.check_connection(self.spec):
@@ -435,7 +434,7 @@ class MeasureConductor(QtCore.QObject):
         return self.started
 
     def exec_cmd(self, a_cmd: str):
-        config = [("Last command", TekConfig(a_cmd_list=[a_cmd]))]
+        config = [("Last command", MeasureConfig(a_cmd_list=[a_cmd]))]
         return self.start(config)
 
     def stop(self):

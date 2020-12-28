@@ -10,7 +10,7 @@ from irspy.built_in_extensions import OrderedDictInsert
 from irspy.qt import qt_utils
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
-from config_dialog import ConfigDialog, TekConfig
+from config_dialog import ConfigDialog, MeasureConfig
 
 
 class MeasureManager(QtCore.QObject):
@@ -29,7 +29,7 @@ class MeasureManager(QtCore.QObject):
         self.settings = a_settings
 
         self.cmd_tree = a_cmd_tree
-        self.measures: Dict[str, TekConfig] = OrderedDictInsert()
+        self.measures: Dict[str, MeasureConfig] = OrderedDictInsert()
 
         self.open_config()
         self.measure_name_before_rename = ""
@@ -70,13 +70,13 @@ class MeasureManager(QtCore.QObject):
         cb.setChecked(a_enabled)
         cb.toggled.connect(self.enable_measure_checkbox_toggled)
 
-    def new_measure(self, a_name="", a_measure_config: TekConfig = None):
+    def new_measure(self, a_name="", a_measure_config: MeasureConfig = None):
         selected_row = qt_utils.get_selected_row(self.measures_table)
         row_index = selected_row + 1 if selected_row is not None else self.measures_table.rowCount()
 
         new_name = a_name if a_name else self.__get_allowable_name(self.__get_measures_list(), "Измерение")
 
-        measure_config = a_measure_config if a_measure_config else TekConfig()
+        measure_config = a_measure_config if a_measure_config else MeasureConfig()
         self.measures.insert(row_index, new_name, measure_config)
         self.add_measure_in_table(row_index, new_name, measure_config.is_enabled())
         self.save_config()
@@ -104,7 +104,7 @@ class MeasureManager(QtCore.QObject):
         with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'r') as config_file:
             config: dict = json.loads(config_file.read())
             for measure, measure_config in config.items():
-                self.new_measure(measure, TekConfig.from_dict(measure_config))
+                self.new_measure(measure, MeasureConfig.from_dict(measure_config))
 
     def change_measure_name_started(self, a_item: QtWidgets.QTableWidgetItem):
         if a_item.column() == MeasureManager.MeasureColumn.NAME:
@@ -157,5 +157,5 @@ class MeasureManager(QtCore.QObject):
         else:
             assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
 
-    def get_enabled_configs(self) -> List[Tuple[str, TekConfig]]:
+    def get_enabled_configs(self) -> List[Tuple[str, MeasureConfig]]:
         return [(name, copy.deepcopy(config)) for name, config in self.measures.items() if config.is_enabled()]

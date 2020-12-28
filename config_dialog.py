@@ -5,66 +5,20 @@ import json
 from PyQt5 import QtGui, QtWidgets, QtCore
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForView
-from irspy.qt.qt_settings_ini_parser import QtSettings
 from irspy.qt.custom_widgets.editable_qtabbar import EditableQTabBar
+from irspy.qt.qt_settings_ini_parser import QtSettings
 
 from ui.py.config_dialog import Ui_config_dialog as ConfigForm
+from device_responce_graph import DeviceResponseGraphDialog
 from DeviceResponseModel import DeviceResponseModel
 from tekvisa_qcompleter import CmdCompleter
+from MeasureConfig import MeasureConfig
 import tekvisa_control as tek
-
-
-class TekConfig:
-    def __init__(self, a_cmd_list=None, a_device_responses=None, a_normalizing_coef=0., a_enable=False):
-        self._cmd_list = [] if a_cmd_list is None else a_cmd_list
-        self._device_responses: Dict[str, List[List[float]]] = {} if a_device_responses is None else a_device_responses
-        self._normalizing_coef = a_normalizing_coef
-        self._enable = a_enable
-
-    def cmd_list(self):
-        return self._cmd_list
-
-    def set_cmd_list(self, a_cmd_list: list):
-        self._cmd_list = a_cmd_list
-
-    def get_device_responses(self):
-        return self._device_responses
-
-    def set_device_responses(self, a_device_responses):
-        self._device_responses = a_device_responses
-
-    def normalize_coef(self):
-        return self._normalizing_coef
-
-    def set_normalize_coef(self, a_value):
-        self._normalizing_coef = a_value
-
-    def is_enabled(self):
-        return self._enable
-
-    def enable(self, a_enable: bool):
-        self._enable = a_enable
-
-    def to_dict(self):
-        return {
-            "cmd_list": self._cmd_list,
-            "device_responses": self._device_responses,
-            "normalizing_coef": self._normalizing_coef,
-            "enable": self._enable,
-        }
-
-    @classmethod
-    def from_dict(cls, a_dict: dict):
-        cmd_list = a_dict["cmd_list"]
-        device_responses = a_dict["device_responses"]
-        normalizing_coef = a_dict["normalizing_coef"]
-        enable = a_dict["enable"]
-        return cls(cmd_list, device_responses, normalizing_coef, enable)
 
 
 class ConfigDialog(QtWidgets.QDialog):
 
-    def __init__(self, a_config: TekConfig, a_cmd_tree: dict, a_settings: QtSettings, a_parent=None):
+    def __init__(self, a_config: MeasureConfig, a_cmd_tree: dict, a_settings: QtSettings, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.ui = ConfigForm()
@@ -113,12 +67,16 @@ class ConfigDialog(QtWidgets.QDialog):
 
         self.ui.add_row_button.clicked.connect(self.add_row)
         self.ui.delete_row_button.clicked.connect(self.delete_row)
+        self.ui.show_graph_button.clicked.connect(self.show_graph_button_clicked)
 
         self.ui.load_response_from_file_button.clicked.connect(self.load_device_responses_button_clicked)
         self.ui.save_response_to_file_button.clicked.connect(self.save_device_responses_button_clicked)
 
         self.ui.ok_button.clicked.connect(self.accept)
         self.ui.cancel_button.clicked.connect(self.reject)
+
+    def __del__(self):
+        print("ConfigDialog deleted")
 
     def add_row(self):
         if self.current_device_response is not None:
@@ -227,8 +185,12 @@ class ConfigDialog(QtWidgets.QDialog):
         if a_item is not None:
             self.ui.cmd_edit.setText(a_item.text())
 
-    def __del__(self):
-        print("ConfigDialog deleted")
+    def show_graph_button_clicked(self):
+        dr_idx = self.tab_bar.widget().currentIndex()
+        dr = self.device_responses[dr_idx]
+        dialog = DeviceResponseGraphDialog(dr.get_table(), self.settings, self)
+        dialog.exec()
+        dialog.close()
 
     def closeEvent(self, a_event: QtGui.QCloseEvent) -> None:
         self.settings.save_qwidget_state(self.ui.config_dialog_splitter)
