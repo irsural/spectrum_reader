@@ -13,7 +13,7 @@ class AboutDialog(QtWidgets.QDialog):
         self.ui.setupUi(self)
         self.show()
 
-        self.ui.version_label.setText(f"Версия программы: {revisions.Revisions.tektronix_control}")
+        self.ui.version_label.setText(f"Версия программы: {revisions.Revisions.SpectrumReader}")
 
         self.ui.close_button.clicked.connect(self.reject)
 
