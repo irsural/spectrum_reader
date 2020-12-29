@@ -15,5 +15,5 @@ current_config.json
 /resources/py
 /configurations
 dist/*
-!dist/Clb_AutoCalibration.exe
+!dist/SpectrumReader.exe
 !dist/settings.ini

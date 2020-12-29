@@ -101,10 +101,13 @@ class MeasureManager(QtCore.QObject):
             config_file.write(json.dumps(json_data, indent=4, ensure_ascii=False))
 
     def open_config(self):
-        with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'r') as config_file:
-            config: dict = json.loads(config_file.read())
-            for measure, measure_config in config.items():
-                self.new_measure(measure, MeasureConfig.from_dict(measure_config))
+        try:
+            with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'r') as config_file:
+                config: dict = json.loads(config_file.read())
+                for measure, measure_config in config.items():
+                    self.new_measure(measure, MeasureConfig.from_dict(measure_config))
+        except FileNotFoundError:
+            pass
 
     def change_measure_name_started(self, a_item: QtWidgets.QTableWidgetItem):
         if a_item.column() == MeasureManager.MeasureColumn.NAME:
