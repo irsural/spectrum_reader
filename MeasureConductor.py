@@ -369,11 +369,11 @@ class MeasureConductor(QtCore.QObject):
                 self.graph_widget.plot(x=x_data, y=y_data, pen=graph_pen, name=str(a_graph_number + 1))
                 self.graphs_data[a_graph_number] = (x_data, y_data)
 
-            if y_data:
-                y_min, y_max = min(y_data), max(y_data)
-                y_start = min((a_spec_params.y_start, y_min))
-                y_stop = max((a_spec_params.y_stop, y_max))
-                self.graph_widget.setYRange(y_start, y_stop)
+            # if y_data:
+                # y_min, y_max = min(y_data), max(y_data)
+                # y_start = min((a_spec_params.y_start, y_min))
+                # y_stop = max((a_spec_params.y_stop, y_max))
+                # self.graph_widget.setYRange(y_start, y_stop)
 
                 self.graph_points_count_changed.emit(len(y_data))
         else:

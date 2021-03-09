@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple
 from enum import IntEnum
 import logging
-import copy
 import json
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -97,6 +96,48 @@ class MeasureManager(QtCore.QObject):
                     del self.measures[removed_name]
                     self.save_config()
 
+    def swap_measures(self, a_bottom_row):
+        """
+        Меняет 2 измерения в таблице местами
+        :param a_bottom_row: Нижняя строка, которая поменяется местами со строкой, расположенной над ней
+        """
+        name_item_bottom = self.measures_table.item(a_bottom_row, MeasureManager.MeasureColumn.NAME)
+        bottom_name = name_item_bottom.text()
+        name_item_top = self.measures_table.item(a_bottom_row - 1, MeasureManager.MeasureColumn.NAME)
+        top_name = name_item_top.text()
+
+        name_item_bottom.setText(top_name)
+        name_item_top.setText(bottom_name)
+
+        enabled_widget_bottom = self.measures_table.cellWidget(a_bottom_row, MeasureManager.MeasureColumn.ENABLE)
+        enabled_checkbox_bottom = qt_utils.unwrap_from_layout(enabled_widget_bottom)
+        enabled_widget_top = self.measures_table.cellWidget(a_bottom_row - 1, MeasureManager.MeasureColumn.ENABLE)
+        enabled_checkbox_top = qt_utils.unwrap_from_layout(enabled_widget_top)
+
+        bottom_enabled = enabled_checkbox_bottom.isChecked()
+        top_enabled = enabled_checkbox_top.isChecked()
+        logging.debug(bottom_enabled)
+        logging.debug(top_enabled)
+
+        enabled_checkbox_bottom.setChecked(top_enabled)
+        enabled_checkbox_top.setChecked(bottom_enabled)
+
+        current_measure_config = self.measures[bottom_name]
+        del self.measures[bottom_name]
+        self.measures.insert(a_bottom_row - 1, bottom_name, current_measure_config)
+
+    def move_measure_up(self, a_measure_number):
+        if a_measure_number > 0:
+            self.swap_measures(a_measure_number)
+            self.measures_table.selectRow(a_measure_number - 1)
+            self.save_config()
+
+    def move_measure_down(self, a_measure_number):
+        if a_measure_number < len(self.measures) - 1:
+            self.swap_measures(a_measure_number + 1)
+            self.measures_table.selectRow(a_measure_number + 1)
+            self.save_config()
+
     def save_config(self):
         with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'w') as config_file:
             json_data = {measure: config.to_dict() for measure, config in self.measures.items()}
@@ -152,6 +193,7 @@ class MeasureManager(QtCore.QObject):
         config_dialog.close()
 
     def enable_measure_checkbox_toggled(self, a_state: bool):
+        logging.debug("toggle")
         checkbox: QtWidgets.QPushButton = self.sender()
         for row in range(self.measures_table.rowCount()):
             cell_widget = self.measures_table.cellWidget(row, MeasureManager.MeasureColumn.ENABLE)

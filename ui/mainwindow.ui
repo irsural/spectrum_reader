@@ -89,6 +89,20 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="graphs_button">
+             <property name="text">
+              <string>Графики</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="clear_graph_button">
+             <property name="text">
+              <string>Сбросить график</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="horizontalSpacer_2">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -104,7 +118,7 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Количество точек на графике</string>
+              <string>Кол-во точек на графике</string>
              </property>
             </widget>
            </item>
@@ -240,6 +254,28 @@
                <property name="icon">
                 <iconset resource="../../irspy/qt/resources/icons.qrc">
                  <normaloff>:/icons/icons/minus2.png</normaloff>:/icons/icons/minus2.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="move_measure_up_button">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../irspy/qt/resources/icons.qrc">
+                 <normaloff>:/icons/icons/up.png</normaloff>:/icons/icons/up.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="move_measure_down_button">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../irspy/qt/resources/icons.qrc">
+                 <normaloff>:/icons/icons/down.png</normaloff>:/icons/icons/down.png</iconset>
                </property>
               </widget>
              </item>

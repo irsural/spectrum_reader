@@ -108,11 +108,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
         self.ui.add_measure_button.clicked.connect(self.add_measure_button_clicked)
         self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
+        self.ui.move_measure_up_button.clicked.connect(self.move_measure_up_button_clicked)
+        self.ui.move_measure_down_button.clicked.connect(self.move_measure_down_button_clicked)
         self.ui.start_measure_button.clicked.connect(self.start_measure_button_clicked)
         self.ui.stop_measure_button.clicked.connect(self.stop_measure_button_clicked)
 
         self.ui.log_scale_checkbox.toggled.connect(self.log_scale_checkbox_toggled)
         self.ui.csv_import_button.clicked.connect(self.csv_import_button_clicked)
+        self.ui.graphs_button.clicked.connect(self.graphs_button_clicked)
+        self.ui.clear_graph_button.clicked.connect(self.clear_graph_button_clicked)
         self.ui.points_count_spinbox.editingFinished.connect(self.graph_points_count_changed)
 
         self.measure_conductor.graph_points_count_changed.connect(self.set_graph_points_count)
@@ -146,6 +150,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.change_path_button.setDisabled(a_lock)
         self.ui.add_measure_button.setDisabled(a_lock)
         self.ui.remove_measure_button.setDisabled(a_lock)
+        self.ui.move_measure_up_button.setDisabled(a_lock)
+        self.ui.move_measure_down_button.setDisabled(a_lock)
 
         self.ui.start_measure_button.setDisabled(a_lock)
 
@@ -225,6 +231,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def remove_measure_button_clicked(self):
         self.measure_manager.remove_measure()
 
+    def move_measure_up_button_clicked(self):
+        selected_row = qt_utils.qtablewidget_get_only_selected_row(self.ui.measures_table)
+        if selected_row is not None:
+            self.measure_manager.move_measure_up(selected_row)
+
+    def move_measure_down_button_clicked(self):
+        selected_row = qt_utils.qtablewidget_get_only_selected_row(self.ui.measures_table)
+        if selected_row is not None:
+            self.measure_manager.move_measure_down(selected_row)
+
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
         configs = self.measure_manager.get_enabled_configs()
@@ -262,6 +278,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 graph_color = MeasureConductor.GRAPH_COLORS[i % len(MeasureConductor.GRAPH_COLORS)]
                 graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
                 self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
+
+    def graphs_button_clicked(self):
+        pass
+
+    def clear_graph_button_clicked(self):
+        pass
 
     def graph_points_count_changed(self):
         if self.ui.points_count_spinbox.value() != self.settings.graph_points_count:
