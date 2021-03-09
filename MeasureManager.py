@@ -146,6 +146,8 @@ class MeasureManager(QtCore.QObject):
             self.measures[measure_name].set_cmd_list(config_dialog.get_cmd_list())
             self.measures[measure_name].set_device_responses(config_dialog.get_device_responses())
             self.measures[measure_name].set_normalize_coef(config_dialog.get_normalize_coef())
+            self.measures[measure_name].set_apply_on_limit(config_dialog.get_apply_on_limit())
+            self.measures[measure_name].set_limit(config_dialog.get_limit())
             self.save_config()
         config_dialog.close()
 

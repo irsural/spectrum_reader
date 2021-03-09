@@ -59,6 +59,8 @@ class ConfigDialog(QtWidgets.QDialog):
         self.device_response_selected(0)
 
         self.ui.normalize_coef_spinbox.setValue(a_config.normalize_coef())
+        self.ui.apply_on_limit_checkbox.setChecked(a_config.apply_on_limit())
+        self.ui.limit_spinbox.setValue(a_config.limit())
 
         self.ui.add_cmd_button.clicked.connect(self.add_cmd_button_clicked)
 
@@ -179,6 +181,12 @@ class ConfigDialog(QtWidgets.QDialog):
 
     def get_normalize_coef(self):
         return self.ui.normalize_coef_spinbox.value()
+
+    def get_apply_on_limit(self):
+        return self.ui.apply_on_limit_checkbox.isChecked()
+
+    def get_limit(self):
+        return self.ui.limit_spinbox.value()
 
     def show_graph_button_clicked(self):
         dr_idx = self.tab_bar.widget().currentIndex()
