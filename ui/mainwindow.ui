@@ -258,6 +258,17 @@
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="copy_measure_button">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../irspy/qt/resources/icons.qrc">
+                 <normaloff>:/icons/icons/duplicate.png</normaloff>:/icons/icons/duplicate.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="move_measure_up_button">
                <property name="text">
                 <string/>

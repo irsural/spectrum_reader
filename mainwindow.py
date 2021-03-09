@@ -108,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
         self.ui.add_measure_button.clicked.connect(self.add_measure_button_clicked)
         self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
+        self.ui.copy_measure_button.clicked.connect(self.copy_measure_button_clicked)
         self.ui.move_measure_up_button.clicked.connect(self.move_measure_up_button_clicked)
         self.ui.move_measure_down_button.clicked.connect(self.move_measure_down_button_clicked)
         self.ui.start_measure_button.clicked.connect(self.start_measure_button_clicked)
@@ -230,6 +231,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def remove_measure_button_clicked(self):
         self.measure_manager.remove_measure()
+
+    def copy_measure_button_clicked(self):
+        selected_row = qt_utils.qtablewidget_get_only_selected_row(self.ui.measures_table)
+        if selected_row is not None:
+            self.measure_manager.copy_measure(selected_row)
 
     def move_measure_up_button_clicked(self):
         selected_row = qt_utils.qtablewidget_get_only_selected_row(self.ui.measures_table)

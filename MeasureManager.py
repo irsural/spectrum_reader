@@ -1,6 +1,7 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Sequence
 from enum import IntEnum
 import logging
+import copy
 import json
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -40,7 +41,7 @@ class MeasureManager(QtCore.QObject):
         self.cmd_tree = a_cmd_tree
 
     @staticmethod
-    def __get_allowable_name(a_existing_names: list, a_name_template: str) -> str:
+    def __get_allowable_name(a_existing_names: Sequence, a_name_template: str) -> str:
         new_name = a_name_template
         counter = 0
         while new_name in a_existing_names:
@@ -96,6 +97,12 @@ class MeasureManager(QtCore.QObject):
                     del self.measures[removed_name]
                     self.save_config()
 
+    def copy_measure(self, a_measure_number):
+        measure_name = self.measures_table.item(a_measure_number, MeasureManager.MeasureColumn.NAME).text()
+        current_measure = copy.deepcopy(self.measures[measure_name])
+        duplicate_name = self.__get_allowable_name(self.measures.keys(), measure_name)
+        self.new_measure(duplicate_name, current_measure)
+
     def swap_measures(self, a_bottom_row):
         """
         Меняет 2 измерения в таблице местами
@@ -116,8 +123,6 @@ class MeasureManager(QtCore.QObject):
 
         bottom_enabled = enabled_checkbox_bottom.isChecked()
         top_enabled = enabled_checkbox_top.isChecked()
-        logging.debug(bottom_enabled)
-        logging.debug(top_enabled)
 
         enabled_checkbox_bottom.setChecked(top_enabled)
         enabled_checkbox_top.setChecked(bottom_enabled)
@@ -160,10 +165,18 @@ class MeasureManager(QtCore.QObject):
     def measure_name_changed(self, a_item: QtWidgets.QTableWidgetItem):
         if self.measure_name_before_rename:
             if a_item.column() == MeasureManager.MeasureColumn.NAME:
-                if a_item.text():
+                new_name = a_item.text()
+                if new_name:
+                    new_name = self.__get_allowable_name(self.measures.keys(), new_name)
                     config = self.measures[self.measure_name_before_rename]
                     del self.measures[self.measure_name_before_rename]
-                    self.measures.insert(a_item.row(), a_item.text(), config)
+                    self.measures.insert(a_item.row(), new_name, config)
+
+                    if a_item.text() != new_name:
+                        # Если заданное имя уже существует и new_name подправлено в __get_allowable_name
+                        self.measure_name_before_rename = ""
+                        a_item.setText(new_name)
+
                     self.save_config()
                 else:
                     a_item.setText(self.measure_name_before_rename)
@@ -193,7 +206,6 @@ class MeasureManager(QtCore.QObject):
         config_dialog.close()
 
     def enable_measure_checkbox_toggled(self, a_state: bool):
-        logging.debug("toggle")
         checkbox: QtWidgets.QPushButton = self.sender()
         for row in range(self.measures_table.rowCount()):
             cell_widget = self.measures_table.cellWidget(row, MeasureManager.MeasureColumn.ENABLE)
