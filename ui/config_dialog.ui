@@ -277,23 +277,24 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="2" column="0">
-        <widget class="QListWidget" name="cmd_list_widget">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>1</horstretch>
-           <verstretch>1</verstretch>
-          </sizepolicy>
+       <item row="1" column="0">
+        <widget class="QLineEdit" name="cmd_edit">
+         <property name="inputMask">
+          <string/>
          </property>
-         <property name="dragDropMode">
-          <enum>QAbstractItemView::InternalMove</enum>
-         </property>
-         <property name="defaultDropAction">
-          <enum>Qt::MoveAction</enum>
+         <property name="placeholderText">
+          <string>Введите команду</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1" rowspan="2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Cценарий выполнения</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" rowspan="3">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QPushButton" name="add_cmd_button">
@@ -306,39 +307,6 @@
            </property>
            <property name="default">
             <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="remove_cmd_button">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../irspy/qt/resources/icons.qrc">
-             <normaloff>:/icons/icons/minus2.png</normaloff>:/icons/icons/minus2.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="load_script_from_file_button">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../irspy/qt/resources/icons.qrc">
-             <normaloff>:/icons/icons/open.png</normaloff>:/icons/icons/open.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="save_script_to_file_button">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../irspy/qt/resources/icons.qrc">
-             <normaloff>:/icons/icons/save.png</normaloff>:/icons/icons/save.png</iconset>
            </property>
           </widget>
          </item>
@@ -357,22 +325,8 @@
          </item>
         </layout>
        </item>
-       <item row="1" column="0">
-        <widget class="QLineEdit" name="cmd_edit">
-         <property name="inputMask">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Введите команду</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Cценарий выполнения</string>
-         </property>
-        </widget>
+       <item row="2" column="0">
+        <widget class="QPlainTextEdit" name="cmd_text_edit"/>
        </item>
       </layout>
      </widget>

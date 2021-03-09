@@ -36,7 +36,9 @@ class ConfigDialog(QtWidgets.QDialog):
         self.current_device_response: Optional[None, DeviceResponseModel] = None
 
         for cmd in a_config.cmd_list():
-            self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(cmd))
+            self.ui.cmd_text_edit.moveCursor(QtGui.QTextCursor.End)
+            self.ui.cmd_text_edit.insertPlainText(cmd + "\n")
+            self.ui.cmd_text_edit.moveCursor(QtGui.QTextCursor.End)
 
         cmd_completer = CmdCompleter(a_cmd_tree, self)
         cmd_completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
@@ -59,11 +61,6 @@ class ConfigDialog(QtWidgets.QDialog):
         self.ui.normalize_coef_spinbox.setValue(a_config.normalize_coef())
 
         self.ui.add_cmd_button.clicked.connect(self.add_cmd_button_clicked)
-        self.ui.remove_cmd_button.clicked.connect(self.remove_cmd_button_clicked)
-        self.ui.load_script_from_file_button.clicked.connect(self.load_script_from_file_button_clicked)
-        self.ui.save_script_to_file_button.clicked.connect(self.save_script_to_file_button_clicked)
-
-        self.ui.cmd_list_widget.currentItemChanged.connect(self.current_list_item_changed)
 
         self.ui.add_row_button.clicked.connect(self.add_row)
         self.ui.delete_row_button.clicked.connect(self.delete_row)
@@ -72,7 +69,7 @@ class ConfigDialog(QtWidgets.QDialog):
         self.ui.load_response_from_file_button.clicked.connect(self.load_device_responses_button_clicked)
         self.ui.save_response_to_file_button.clicked.connect(self.save_device_responses_button_clicked)
 
-        self.ui.ok_button.clicked.connect(self.accept)
+        self.ui.ok_button.clicked.connect(self.try_accept)
         self.ui.cancel_button.clicked.connect(self.reject)
 
     def __del__(self):
@@ -119,16 +116,11 @@ class ConfigDialog(QtWidgets.QDialog):
         if cmd:
             cmd_description = tek.get_cmd_description(cmd.split(" ")[0], self.cmd_tree)
             if cmd_description:
-                item = QtWidgets.QListWidgetItem(cmd)
-                self.ui.cmd_list_widget.insertItem(self.ui.cmd_list_widget.currentRow() + 1, item)
-                self.ui.cmd_list_widget.setCurrentItem(item)
+                self.ui.cmd_text_edit.insertPlainText(cmd)
                 self.ui.cmd_edit.clear()
             else:
                 QtWidgets.QMessageBox.critical(self, "Ошибка", "Неверная команда", QtWidgets.QMessageBox.Ok,
                                                QtWidgets.QMessageBox.Ok)
-
-    def remove_cmd_button_clicked(self):
-        self.ui.cmd_list_widget.takeItem(self.ui.cmd_list_widget.currentRow())
 
     def load_device_responses_button_clicked(self):
         if self.current_device_response:
@@ -153,37 +145,40 @@ class ConfigDialog(QtWidgets.QDialog):
                 with open(filename, "w") as file:
                     file.write(config_data)
 
-    def load_script_from_file_button_clicked(self):
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Загрузка сценария выполнения", "",
-                                                            "Сценарии выполнения (*.es)")
-        if filename:
-            with open(filename, 'r') as file:
-                config_data = json.loads(file.read())
-                self.ui.cmd_list_widget.clear()
-                for config_row in config_data:
-                    self.ui.cmd_list_widget.addItem(QtWidgets.QListWidgetItem(config_row))
+    def try_accept(self):
+        cmd_text = self.ui.cmd_text_edit.toPlainText()
+        cmd_list = cmd_text.split("\n")
+        cmd_list = list(filter(lambda x: x != "", cmd_list))
 
-    def save_script_to_file_button_clicked(self):
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохренение сценария выполнения", "",
-                                                            "Сценарии выполнения (*.es)")
-        if filename:
-            cmd_list = [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
-            config_data = json.dumps(cmd_list, indent=4, ensure_ascii=False)
-            with open(filename, "w") as file:
-                file.write(config_data)
+        bad_cmds = []
+        for cmd in cmd_list:
+            cmd_description = tek.get_cmd_description(cmd.split(" ")[0], self.cmd_tree)
+            if not cmd_description:
+                bad_cmds.append(cmd)
+
+        if bad_cmds:
+            bad_cmds_str = "\n".join(bad_cmds)
+            QtWidgets.QMessageBox.critical(self, "Ошибка", f"Следующие команды не распознаны:\n{bad_cmds_str}",
+                                           QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
+        else:
+            self.accept()
 
     def get_cmd_list(self):
-        return [self.ui.cmd_list_widget.item(row).text() for row in range(self.ui.cmd_list_widget.count())]
+        cmd_text = self.ui.cmd_text_edit.toPlainText()
+        cmd_list = cmd_text.split("\n")
+        cmd_list = list(filter(lambda x: x != "", cmd_list))
+
+        for cmd in cmd_list:
+            cmd_description = tek.get_cmd_description(cmd.split(" ")[0], self.cmd_tree)
+            if not cmd_description:
+                raise ValueError
+        return cmd_list
 
     def get_device_responses(self) -> Dict[str, List[List[float]]]:
         return {dr.get_name(): dr.get_table() for dr in self.device_responses}
 
     def get_normalize_coef(self):
         return self.ui.normalize_coef_spinbox.value()
-
-    def current_list_item_changed(self, a_item: QtWidgets.QTableWidgetItem, _):
-        if a_item is not None:
-            self.ui.cmd_edit.setText(a_item.text())
 
     def show_graph_button_clicked(self):
         dr_idx = self.tab_bar.widget().currentIndex()
