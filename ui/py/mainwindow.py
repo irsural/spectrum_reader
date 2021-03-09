@@ -110,6 +110,8 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(2)
         sizePolicy.setHeightForWidth(self.measures_table.sizePolicy().hasHeightForWidth())
         self.measures_table.setSizePolicy(sizePolicy)
+        self.measures_table.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.measures_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.measures_table.setObjectName("measures_table")
         self.measures_table.setColumnCount(3)
         self.measures_table.setRowCount(0)

@@ -82,18 +82,20 @@ class MeasureManager(QtCore.QObject):
         self.save_config()
 
     def remove_measure(self):
-        selected_row = qt_utils.get_selected_row(self.measures_table)
-        if selected_row is not None:
-            removed_name = self.measures_table.item(selected_row, MeasureManager.MeasureColumn.NAME).text()
+        selected_rows = [row.row() for row in self.measures_table.selectionModel().selectedRows()]
+        selected_rows.sort()
+
+        if selected_rows:
             res = QtWidgets.QMessageBox.question(None, "Подтвердите действие",
-                                                 f"Удалить измерение с именем {removed_name}? "
-                                                 f"Данное действие нельзя отменить",
+                                                 f"Удалить выдыленные измерения? Данное действие нельзя отменить",
                                                  QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                                                  QtWidgets.QMessageBox.No)
             if res == QtWidgets.QMessageBox.Yes:
-                self.measures_table.removeRow(selected_row)
-                del self.measures[removed_name]
-                self.save_config()
+                for row in reversed(selected_rows):
+                    removed_name = self.measures_table.item(row, MeasureManager.MeasureColumn.NAME).text()
+                    self.measures_table.removeRow(row)
+                    del self.measures[removed_name]
+                    self.save_config()
 
     def save_config(self):
         with open(MeasureManager.CURRENT_CONFIG_FILENAME, 'w') as config_file:
