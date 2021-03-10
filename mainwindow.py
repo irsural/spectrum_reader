@@ -1,8 +1,5 @@
 from logging.handlers import RotatingFileHandler
-from typing import List
 import logging
-import math
-import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph
@@ -16,6 +13,7 @@ from ui.py.mainwindow import Ui_MainWindow as MainForm
 from MeasureConductor import MeasureConductor
 from tekvisa_qcompleter import CmdCompleter
 from MeasureManager import MeasureManager
+from graphs_control import GraphsControl
 from about_dialog import AboutDialog
 import tekvisa_control as tek
 import settings
@@ -53,14 +51,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.gnrw_state_changed(False, 0)
 
             self.graph_widget = pyqtgraph.PlotWidget()
-            self.init_graph(self.graph_widget)
+            self.graphs_control = GraphsControl(self.graph_widget, self.settings)
+            self.ui.chart_layout.addWidget(self.graph_widget)
 
             self.cmd_tree = tek.get_commands_three(tek.CmdCase.UPPER)
             self.add_extra_commands(self.cmd_tree)
             self.set_completer(self.cmd_tree)
 
             self.measure_conductor = MeasureConductor(self.ui.gnrw_ip_edit.text(), self.settings,
-                                                      self.graph_widget, self.cmd_tree)
+                                                      self.graphs_control, self.cmd_tree)
             self.measure_conductor.sa_connect(self.settings.sa_ip)
             self.measure_conductor.tektronix_is_ready.connect(self.tektronix_is_ready)
             self.measure_conductor.gnrw_state_changed.connect(self.gnrw_state_changed)
@@ -75,23 +74,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tick_timer = QtCore.QTimer(self)
             self.tick_timer.timeout.connect(self.tick)
             self.tick_timer.start(10)
-
         else:
             self.close()
-
-    def init_graph(self, a_graph_widget: pyqtgraph.PlotWidget):
-        pyqtgraph.setConfigOption('leftButtonPan', False)
-        a_graph_widget.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                                           QtWidgets.QSizePolicy.Preferred))
-        a_graph_widget.setSizeIncrement(1, 1)
-        a_graph_widget.setBackground('w')
-        a_graph_widget.setLabel('bottom', 'Частота, Гц', color='black', size=20)
-        a_graph_widget.setLabel('left', 'Амплитуда, dBm', color='black', size=20)
-        a_graph_widget.showGrid(x=True, y=True)
-        a_graph_widget.plotItem.getViewBox().setMouseMode(pyqtgraph.ViewBox.RectMode)
-        a_graph_widget.addLegend()
-
-        self.ui.chart_layout.addWidget(a_graph_widget)
 
     def connect_all(self):
         self.ui.open_about_action.triggered.connect(self.open_about)
@@ -120,7 +104,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.clear_graph_button.clicked.connect(self.clear_graph_button_clicked)
         self.ui.points_count_spinbox.editingFinished.connect(self.graph_points_count_changed)
 
-        self.measure_conductor.graph_points_count_changed.connect(self.set_graph_points_count)
+        self.graphs_control.graph_points_count_changed.connect(self.set_graph_points_count)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -249,6 +233,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
+
+        self.sa_connect_button_clicked()
+        self.gnrw_connect_button_clicked()
+
         configs = self.measure_manager.get_enabled_configs()
         if self.measure_conductor.start(configs, self.ui.measure_path_edit.text()):
             self.lock_interface(True)
@@ -258,42 +246,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lock_interface(False)
 
     def log_scale_checkbox_toggled(self, a_state: bool):
-        self.graph_widget.plotItem.setLogMode(x=a_state, y=False)
+        self.graphs_control.log_scale_enable(a_state)
         self.settings.log_scale_enabled = int(a_state)
 
     def csv_import_button_clicked(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Импорт графика из csv",
                                                             self.ui.measure_path_edit.text(), "CSV (*.csv)")
         if filename:
-            with open(filename, 'r') as csv_file:
-                csv_reader = csv.reader(csv_file)
-                headers = next(csv_reader)
-                plots_count = len(headers) // 2
-
-                x_data: List[List[float]] = [[] for _ in range(plots_count)]
-                y_data: List[List[float]] = [[] for _ in range(plots_count)]
-
-                for row in csv_reader:
-                    for column, p in enumerate(row):
-                        if column < len(headers):
-                            data = x_data if column % 2 == 0 else y_data
-                            data[math.floor(column // 2)].append(float(p))
-
-            self.graph_widget.plotItem.clear()
-            for i in range(plots_count):
-                graph_color = MeasureConductor.GRAPH_COLORS[i % len(MeasureConductor.GRAPH_COLORS)]
-                graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
-                self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
+            self.graphs_control.import_from_csv(filename)
 
     def graphs_button_clicked(self):
         pass
 
     def clear_graph_button_clicked(self):
-        pass
+        self.graphs_control.clear()
 
     def graph_points_count_changed(self):
         if self.ui.points_count_spinbox.value() != self.settings.graph_points_count:
-            self.measure_conductor.set_graph_points_count(self.ui.points_count_spinbox.value())
+            self.graphs_control.set_points_count(self.ui.points_count_spinbox.value())
             self.settings.graph_points_count = self.ui.points_count_spinbox.value()
 
     def set_graph_points_count(self, a_points_count: int):

@@ -4,18 +4,17 @@ from decimal import Decimal
 from enum import IntEnum
 import logging
 import struct
-import bisect
 import math
 
-from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
 from PyQt5 import QtCore
 from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
 from irspy.pokrov import pokrov_dll
 
-import tekvisa_control as tek
+from graphs_control import GraphsControl
 from MeasureConfig import MeasureConfig
+import tekvisa_control as tek
 
 
 class SpecterParameters:
@@ -42,25 +41,9 @@ class MeasureConductor(QtCore.QObject):
 
     tektronix_is_ready = QtCore.pyqtSignal()
     gnrw_state_changed = QtCore.pyqtSignal(bool, int)
-    graph_points_count_changed = QtCore.pyqtSignal(int)
 
     DEFAULT_CMD_DELAY_S = 0
     OPC_POLL_DELAY_S = 1
-
-    GRAPH_COLORS = (
-        (255, 0, 0),
-        (0, 255, 0),
-        (0, 0, 255),
-        (0, 204, 204),
-        (204, 0, 102),
-        (204, 204, 0),
-        (255, 0, 255),
-        (102, 153, 153),
-        (255, 153, 0),
-        (102, 204, 255),
-        (0, 255, 153),
-        (204, 102, 255),
-    )
 
     SPEC_CMD_WAIT = ":WAIT"
     SPEC_CMD_READ_DELAY = ":READ_DELAY"
@@ -82,13 +65,13 @@ class MeasureConductor(QtCore.QObject):
 
     GNRW_SYNC_DELAY_S = 2
 
-    def __init__(self, a_gnrw_ip: str, a_settings, a_graph_widget: PlotWidget, a_cmd_tree: dict, a_parent=None):
+    def __init__(self, a_gnrw_ip: str, a_settings, a_graphs_control: GraphsControl, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.spec: Optional[None, vxi11.Device] = None
 
         self.settings = a_settings
-        self.graph_widget = a_graph_widget
+        self.graphs_control = a_graphs_control
         self.cmd_tree = a_cmd_tree
 
         self.started = False
@@ -107,8 +90,7 @@ class MeasureConductor(QtCore.QObject):
         self.pokrov = pokrov_dll.PokrovDrv()
         self.pokrov.connect(a_gnrw_ip)
 
-        self.current_graph = 0
-        self.graphs_data: Dict[int, Tuple[List, List]] = {}
+        self.current_measure_graph_number = 0
 
         self.convert_hz = value_to_user_with_units("Гц")
 
@@ -122,8 +104,7 @@ class MeasureConductor(QtCore.QObject):
         self.tek_status = self.TekStatus.READY
         self.save_folder = ""
         self.current_measure_name = ""
-        self.current_graph = 0
-        self.graphs_data = {}
+        self.current_measure_graph_number = 0
 
     def sa_connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -242,7 +223,7 @@ class MeasureConductor(QtCore.QObject):
                         try:
                             self.current_measure_name, self.current_config = next(self.configs_gen)
                             self.current_cmd_queue = deque(self.current_config.cmd_list())
-                            self.current_graph = 0
+                            self.current_measure_graph_number = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
                             self.save_results(self.current_measure_name)
@@ -258,8 +239,8 @@ class MeasureConductor(QtCore.QObject):
                     self.tek_status = self.TekStatus.READY
                     binary_spectrum = tek.read_raw_answer(self.spec)
                     if binary_spectrum:
-                        self.draw_spectrum(binary_spectrum, self.get_specter_parameters(), self.current_graph)
-                        self.current_graph += 1
+                        self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
+                        self.current_measure_graph_number += 1
 
                 elif self.tek_status == self.TekStatus.WAIT_OPC:
                     if tek.is_operation_completed(self.spec):
@@ -322,10 +303,9 @@ class MeasureConductor(QtCore.QObject):
         normalized_amplitudes = []
         for amplitude, frequency in zip(a_amplitudes, a_frequencies):
             if self.current_config.apply_on_limit() and amplitude >= self.current_config.limit():
-                amplitude += self.current_config.total_device_response(frequency / 1e6) - coef
+                amplitude += self.current_config.total_device_response(frequency / 1e6)
 
-            amplitude += self.current_config.normalize_coef()
-
+            amplitude += self.current_config.normalize_coef() - coef
             normalized_amplitudes.append(amplitude)
 
         # return [a + self.current_config.total_device_response(f / 1e6) - coef + self.current_config.normalize_coef()
@@ -343,87 +323,26 @@ class MeasureConductor(QtCore.QObject):
             x_points.append(float(decimal_sum))
         return x_points
 
-    def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters, a_graph_number: int):
+    def draw_spectrum(self, a_data: bytes, a_spec_params: SpecterParameters):
         if self.byte_to_char(a_data, 0) == '#':
             spec_data = self.extract_spectrum_data(a_data)
 
             frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(spec_data))
             amplitudes = self.normalize_spectrum_data(spec_data, frequencies, a_spec_params.rbw)
 
-            try:
-                x_data, y_data = self.graphs_data[a_graph_number]
-                x_data.extend(frequencies)
-                y_data.extend(amplitudes)
-                plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[a_graph_number]
-                plot_data_item.setData(x=x_data, y=y_data)
-
-            except KeyError:
-                # Это первые данные для графика с a_graph_number номером
-                x_data, y_data = frequencies, amplitudes
-                graph_color = MeasureConductor.GRAPH_COLORS[a_graph_number % len(MeasureConductor.GRAPH_COLORS)]
-                graph_pen = mkPen(color=graph_color, width=2)
-
-                # graph_name = f"{a_graph_number + 1}. {self.convert_hz(a_spec_params.x_start)} - " \
-                #              f"{self.convert_hz(a_spec_params.x_stop)}, RBW {self.convert_hz(a_spec_params.rbw)}"
-
-                self.graph_widget.plot(x=x_data, y=y_data, pen=graph_pen, name=str(a_graph_number + 1))
-                self.graphs_data[a_graph_number] = (x_data, y_data)
-
-            # if y_data:
-                # y_min, y_max = min(y_data), max(y_data)
-                # y_start = min((a_spec_params.y_start, y_min))
-                # y_stop = max((a_spec_params.y_stop, y_max))
-                # self.graph_widget.setYRange(y_start, y_stop)
-
-                self.graph_points_count_changed.emit(len(y_data))
+            # graph_name = f"{self.current_measure_name}_{self.current_measure_graph_number}"
+            graph_name = f"{self.current_measure_graph_number}"
+            self.graphs_control.draw(graph_name, frequencies, amplitudes)
         else:
             logging.error("Неверные данные для построения графика спектра")
-
-    def set_graph_points_count(self, a_points_count):
-        if self.graphs_data:
-            for graph_number, (_, (x_data, y_data)) in enumerate(self.graphs_data.items()):
-                if x_data:
-                    if a_points_count > len(x_data):
-                        a_points_count = len(x_data)
-                        logging.warning(f"Количество точек на графике = {len(x_data)}")
-
-                    new_data_indices = []
-                    factor = (x_data[-1] / x_data[0]) ** (1 / (a_points_count - 1))
-                    x = x_data[0]
-                    for i in range(1, a_points_count + 1):
-                        idx = bisect.bisect_right(x_data, x) - 1
-                        new_data_indices.append(idx)
-                        x *= factor
-
-                    new_x_data = [x_data[i] for i in new_data_indices]
-                    new_y_data = [y_data[i] for i in new_data_indices]
-
-                    plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
-                    plot_data_item.setData(x=new_x_data, y=new_y_data)
 
     def get_next_config_deque(self) -> Tuple[str, deque]:
         for name, config in self.current_configs:
             yield name, config
 
     def save_results(self, a_filename):
-        if self.save_folder and self.graph_widget.plotItem.listDataItems():
-            png_filename = f"{self.save_folder}/{a_filename}.png"
-            csv_filename = f"{self.save_folder}/{a_filename}.csv"
-
-            png_exporter = exporters.ImageExporter(self.graph_widget.plotItem)
-            png_exporter.parameters()['width'] = 1e3
-            png_exporter.export(png_filename)
-
-            # В LogMode=True сохраняются левые значения
-            self.graph_widget.plotItem.setLogMode(x=False, y=False)
-
-            csv_exporter = exporters.CSVExporter(self.graph_widget.plotItem)
-            try:
-                csv_exporter.export(csv_filename)
-            except ValueError:
-                logging.error("Не удалось сохранить csv-файл")
-
-            self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
+        if self.save_folder:
+            self.graphs_control.save_to_file(f"{self.save_folder}/{a_filename}")
 
     def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder=""):
         self.reset()
@@ -436,10 +355,8 @@ class MeasureConductor(QtCore.QObject):
                 self.wait_timer.start(0)
                 self.tek_status = self.TekStatus.READY
                 self.save_folder = a_save_folder
-                self.graph_widget.plotItem.clear()
 
-                self.current_graph = 0
-                self.graphs_data = {}
+                self.current_measure_graph_number = 0
 
                 self.started = True
             else:
