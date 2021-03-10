@@ -4,6 +4,7 @@ from decimal import Decimal
 from enum import IntEnum
 import logging
 import struct
+import json
 import math
 
 from PyQt5 import QtCore
@@ -82,7 +83,8 @@ class MeasureConductor(QtCore.QObject):
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
         self.save_folder = ""
-        self.current_measure_name = ""
+        self.save_filename = ""
+        self.comment = ""
 
         self.pokrov_prev_connected_state = False
         self.gnrw_check_connection_timer = Timer(0.2)
@@ -103,7 +105,8 @@ class MeasureConductor(QtCore.QObject):
         self.wait_timer = Timer(0)
         self.tek_status = self.TekStatus.READY
         self.save_folder = ""
-        self.current_measure_name = ""
+        self.save_filename = ""
+        self.comment = ""
         self.current_measure_graph_number = 0
 
     def sa_connect(self, a_ip: str):
@@ -221,12 +224,12 @@ class MeasureConductor(QtCore.QObject):
                                         self.handle_measure_error(f"Не задан параметр для команды {self.SPEC_CMD_READ_DELAY}")
                     else:
                         try:
-                            self.current_measure_name, self.current_config = next(self.configs_gen)
+                            _, self.current_config = next(self.configs_gen)
                             self.current_cmd_queue = deque(self.current_config.cmd_list())
                             self.current_measure_graph_number = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
-                            self.save_results(self.current_measure_name)
+                            self.save_results(self.save_filename)
                             self.stop()
                             self.tektronix_is_ready.emit()
 
@@ -330,8 +333,7 @@ class MeasureConductor(QtCore.QObject):
             frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(spec_data))
             amplitudes = self.normalize_spectrum_data(spec_data, frequencies, a_spec_params.rbw)
 
-            # graph_name = f"{self.current_measure_name}_{self.current_measure_graph_number}"
-            graph_name = f"{self.current_measure_graph_number}"
+            graph_name = f"{self.save_filename}_{self.current_measure_graph_number + 1}"
             self.graphs_control.draw(graph_name, frequencies, amplitudes)
         else:
             logging.error("Неверные данные для построения графика спектра")
@@ -342,19 +344,30 @@ class MeasureConductor(QtCore.QObject):
 
     def save_results(self, a_filename):
         if self.save_folder:
-            self.graphs_control.save_to_file(f"{self.save_folder}/{a_filename}")
+            self.graphs_control.save_to_file(self.save_folder, a_filename)
 
-    def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder=""):
+            full_measure_config = {"Комментарий": self.comment}
+            config_gen = self.get_next_config_deque()
+            for name, config in config_gen:
+                full_measure_config[name] = config.cmd_list()
+
+            with open(f"{self.save_folder}/{a_filename}.json", 'w') as config_file:
+                config_file.write(json.dumps(full_measure_config, indent=4, ensure_ascii=False))
+
+    def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder, a_save_filename, a_comment):
         self.reset()
         if a_configs:
             if tek.check_connection(self.spec):
                 self.current_configs = a_configs
                 self.configs_gen = self.get_next_config_deque()
-                self.current_measure_name, self.current_config = next(self.configs_gen)
+                _, self.current_config = next(self.configs_gen)
                 self.current_cmd_queue = deque(self.current_config.cmd_list())
                 self.wait_timer.start(0)
                 self.tek_status = self.TekStatus.READY
+
                 self.save_folder = a_save_folder
+                self.save_filename = a_save_filename
+                self.comment = a_comment
 
                 self.current_measure_graph_number = 0
 
@@ -366,7 +379,7 @@ class MeasureConductor(QtCore.QObject):
 
     def exec_cmd(self, a_cmd: str):
         config = [("Last command", MeasureConfig(a_cmd_list=[a_cmd]))]
-        return self.start(config)
+        return self.start(config, "", "", "")
 
     def stop(self):
         self.started = False

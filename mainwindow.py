@@ -1,5 +1,6 @@
 from logging.handlers import RotatingFileHandler
 import logging
+import os
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph
@@ -45,6 +46,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.measures_table.setItemDelegate(TransparentPainterForWidget(self.ui.measures_table, "#d4d4ff"))
 
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
+            self.ui.save_file_name_edit.setText(self.settings.save_file_name)
+            self.ui.measure_comment_edit.setText(self.settings.measure_comment)
             self.ui.sa_ip_edit.setText(self.settings.sa_ip)
             self.ui.gnrw_ip_edit.setText(self.settings.gnrw_ip)
             self.ui.points_count_spinbox.setValue(self.settings.graph_points_count)
@@ -90,6 +93,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.cmd_edit.textChanged.connect(self.cmd_edit_text_changed)
 
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
+        self.ui.save_file_name_edit.textChanged.connect(self.save_file_name_changed)
+        self.ui.measure_comment_edit.textChanged.connect(self.measure_comment_changed)
         self.ui.add_measure_button.clicked.connect(self.add_measure_button_clicked)
         self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
         self.ui.copy_measure_button.clicked.connect(self.copy_measure_button_clicked)
@@ -210,6 +215,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.settings.save_folder_path = save_folder_path
             self.ui.measure_path_edit.setText(save_folder_path)
 
+    def save_file_name_changed(self, a_filename):
+        self.settings.save_file_name = a_filename
+
+    def measure_comment_changed(self, a_comment):
+        self.settings.measure_comment = a_comment
+
     def add_measure_button_clicked(self):
         self.measure_manager.new_measure()
 
@@ -234,12 +245,34 @@ class MainWindow(QtWidgets.QMainWindow):
     def start_measure_button_clicked(self):
         self.measure_manager.save_config()
 
-        self.sa_connect_button_clicked()
-        self.gnrw_connect_button_clicked()
+        measure_path = self.ui.measure_path_edit.text()
+        measure_filename = self.ui.save_file_name_edit.text()
 
-        configs = self.measure_manager.get_enabled_configs()
-        if self.measure_conductor.start(configs, self.ui.measure_path_edit.text()):
-            self.lock_interface(True)
+        if measure_path and measure_filename:
+
+            csv_full_filename = f"{measure_path}/{measure_filename}.csv"
+            png_full_filename = f"{measure_path}/{measure_filename}.png"
+            start_measure = True
+            if os.path.isfile(csv_full_filename) or os.path.isfile(png_full_filename):
+                res = QtWidgets.QMessageBox.question(self, "Предупреждение",
+                                                     f"Измерение {measure_filename} уже существует и будет перезаписано. "
+                                                     f"Продолжить?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                     QtWidgets.QMessageBox.Yes)
+                if res == QtWidgets.QMessageBox.No:
+                    start_measure = False
+
+            if start_measure:
+                self.sa_connect_button_clicked()
+                self.gnrw_connect_button_clicked()
+
+                comment = self.ui.measure_comment_edit.text()
+                configs = self.measure_manager.get_enabled_configs()
+                if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
+                    self.lock_interface(True)
+        else:
+            QtWidgets.QMessageBox.critical(self, "Ошибка",
+                                           "Необходимо задать каталог для сохранения и имя сохраняемого файла",
+                                           QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
 
     def stop_measure_button_clicked(self):
         self.measure_conductor.stop()

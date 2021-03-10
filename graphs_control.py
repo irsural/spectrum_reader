@@ -1,14 +1,17 @@
 from typing import List, Dict, Tuple
+from datetime import datetime
 import logging
 import bisect
 import math
 import csv
+import os
 
 from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
 from PyQt5 import QtCore, QtWidgets, QtGui
 import pyqtgraph
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
+from irspy import utils
 
 
 class GraphsControl(QtCore.QObject):
@@ -28,6 +31,8 @@ class GraphsControl(QtCore.QObject):
     )
 
     graph_points_count_changed = QtCore.pyqtSignal(int)
+
+    DATE_FORMAT = "%Y%m%d %H%M%S"
 
     def __init__(self, a_graph_widget: pyqtgraph.PlotWidget, a_settings: QtSettings, a_parent=None):
         super().__init__(parent=a_parent)
@@ -71,6 +76,10 @@ class GraphsControl(QtCore.QObject):
             target_plot_item = list(filter(lambda p: p.name() == graph_name, plot_data_items))[0]
             target_plot_item.setData(x=x_data, y=y_data)
 
+        # ax = pw.getAxis('bottom')
+        # dx = [(value, str(value))]
+        # ax.setTicks([dx, []])
+
         self.graph_points_count_changed.emit(len(self.graphs_data[graph_name][0]))
 
     def set_points_count(self, a_count):
@@ -95,10 +104,26 @@ class GraphsControl(QtCore.QObject):
                     plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
                     plot_data_item.setData(x=new_x_data, y=new_y_data)
 
-    def save_to_file(self, a_filename):
+    def get_current_graphs_range(self):
+        x_min = 9e999
+        x_max = 0
+        for xs, _ in self.graphs_data.values():
+            x_min = x_min if x_min < xs[0] else xs[0]
+            x_max = x_max if x_max > xs[-1] else xs[-1]
+
+        return x_min, x_max
+
+    def save_to_file(self, a_save_folder, a_filename):
         if self.graph_widget.plotItem.listDataItems():
-            png_filename = f"{a_filename}.png"
-            csv_filename = f"{a_filename}.csv"
+            date_str = datetime.now().strftime(GraphsControl.DATE_FORMAT)
+            x_start, x_end = self.get_current_graphs_range()
+
+            x_start_units = utils.value_to_user_with_units("Гц")(x_start)
+            x_end_units = utils.value_to_user_with_units("Гц")(x_end)
+
+            filename = f"{date_str} {a_filename} {x_start_units}-{x_end_units}"
+            png_filename = f"{a_save_folder}/{filename}.png"
+            csv_filename = f"{a_save_folder}/{filename}.csv"
 
             png_exporter = exporters.ImageExporter(self.graph_widget.plotItem)
             png_exporter.parameters()['width'] = 1e3
@@ -130,8 +155,7 @@ class GraphsControl(QtCore.QObject):
                         data = x_data if column % 2 == 0 else y_data
                         data[math.floor(column // 2)].append(float(p))
 
-        self.graph_widget.plotItem.clear()
-        for i in range(plots_count):
-            graph_color = GraphsControl.COLORS[i % len(GraphsControl.COLORS)]
-            graph_pen = pyqtgraph.mkPen(color=graph_color, width=2)
-            self.graph_widget.plot(x=x_data[i], y=y_data[i], pen=graph_pen, name=str(i + 1))
+        path, filename = os.path.split(a_filename)
+        measure_name = filename[:filename.rfind(".")]
+        for number, (xs, ys) in enumerate(zip(x_data, y_data)):
+            self.draw(f"{measure_name}_{number}", xs, ys)

@@ -123,6 +123,17 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="reset_graph_points_count_button">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="../../irspy/qt/resources/icons.qrc">
+               <normaloff>:/icons/icons/reset.png</normaloff>:/icons/icons/reset.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QSpinBox" name="points_count_spinbox">
              <property name="minimum">
               <number>1</number>
@@ -172,32 +183,42 @@
          <property name="spacing">
           <number>6</number>
          </property>
-         <item row="9" column="0" colspan="2">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QPushButton" name="idn_button">
-             <property name="text">
-              <string>*IDN?</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="error_buttons">
-             <property name="text">
-              <string>Ошибки</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="read_specter_button">
-             <property name="text">
-              <string>Спектр</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Команда</string>
+           </property>
+          </widget>
          </item>
-         <item row="13" column="0" colspan="2">
+         <item row="1" column="1">
+          <widget class="QPushButton" name="sa_connect_button">
+           <property name="text">
+            <string>Подключиться</string>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Путь сохранения измерений</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QPushButton" name="send_cmd_button">
+           <property name="text">
+            <string>Отправить</string>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Имя сохраняемого файла</string>
+           </property>
+          </widget>
+         </item>
+         <item row="18" column="0" colspan="2">
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
             <widget class="QTableWidget" name="measures_table">
@@ -307,26 +328,24 @@
            </item>
           </layout>
          </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Описание команды</string>
+         <item row="6" column="0" colspan="2">
+          <widget class="QPlainTextEdit" name="cmd_description_text_edit">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>1</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>40</height>
+            </size>
            </property>
           </widget>
          </item>
-         <item row="12" column="1">
-          <widget class="QPushButton" name="change_path_button">
-           <property name="text">
-            <string>Изменить</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QPushButton" name="gnrw_connect_button">
-           <property name="text">
-            <string>Подключиться</string>
-           </property>
-          </widget>
+         <item row="1" column="0">
+          <widget class="QLineEdit" name="sa_ip_edit"/>
          </item>
          <item row="2" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -366,61 +385,10 @@
            </item>
           </layout>
          </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="Line" name="line_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1">
-          <widget class="QPushButton" name="send_cmd_button">
-           <property name="text">
-            <string>Отправить</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>IP-адрес спектроанализатора</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="0">
-          <widget class="QLineEdit" name="measure_path_edit"/>
-         </item>
          <item row="3" column="0">
           <widget class="QLineEdit" name="gnrw_ip_edit"/>
          </item>
-         <item row="1" column="1">
-          <widget class="QPushButton" name="sa_connect_button">
-           <property name="text">
-            <string>Подключиться</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLineEdit" name="cmd_edit"/>
-         </item>
-         <item row="11" column="0">
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Путь сохранения измерений</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>Команда</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLineEdit" name="sa_ip_edit"/>
-         </item>
-         <item row="14" column="0" colspan="2">
+         <item row="19" column="0" colspan="2">
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
             <widget class="QPushButton" name="start_measure_button">
@@ -446,6 +414,58 @@
            </item>
           </layout>
          </item>
+         <item row="9" column="0" colspan="2">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QPushButton" name="idn_button">
+             <property name="text">
+              <string>*IDN?</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="error_buttons">
+             <property name="text">
+              <string>Ошибки</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="read_specter_button">
+             <property name="text">
+              <string>Спектр</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="15" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Комментарий к измерению</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Описание команды</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLineEdit" name="cmd_edit"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>IP-адрес спектроанализатора</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="0">
+          <widget class="QLineEdit" name="measure_path_edit"/>
+         </item>
          <item row="10" column="0" colspan="2">
           <widget class="Line" name="line_3">
            <property name="orientation">
@@ -453,21 +473,32 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="cmd_description_text_edit">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>1</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>40</height>
-            </size>
+         <item row="4" column="0" colspan="2">
+          <widget class="Line" name="line_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QPushButton" name="gnrw_connect_button">
+           <property name="text">
+            <string>Подключиться</string>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="1">
+          <widget class="QPushButton" name="change_path_button">
+           <property name="text">
+            <string>Изменить</string>
+           </property>
+          </widget>
+         </item>
+         <item row="14" column="0" colspan="2">
+          <widget class="QLineEdit" name="save_file_name_edit"/>
+         </item>
+         <item row="16" column="0" colspan="2">
+          <widget class="QLineEdit" name="measure_comment_edit"/>
          </item>
         </layout>
        </widget>
