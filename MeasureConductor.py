@@ -69,7 +69,7 @@ class MeasureConductor(QtCore.QObject):
 
     DATE_FORMAT = "%Y%m%d %H%M%S"
 
-    def __init__(self, a_gnrw_ip: str, a_settings, a_graphs_control: GraphsControl, a_cmd_tree: dict, a_parent=None):
+    def __init__(self, a_settings, a_graphs_control: GraphsControl, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
         self.spec: Optional[None, vxi11.Device] = None
@@ -93,7 +93,6 @@ class MeasureConductor(QtCore.QObject):
         self.gnrw_check_connection_timer = Timer(0.2)
         self.gnrw_check_connection_timer.start()
         self.pokrov = pokrov_dll.PokrovDrv()
-        self.pokrov.connect(a_gnrw_ip)
 
         self.current_measure_graph_number = 0
 
@@ -118,6 +117,9 @@ class MeasureConductor(QtCore.QObject):
 
     def gnrw_connect(self, a_ip: str):
         self.pokrov.connect(a_ip)
+
+    def is_gnrw_connected(self):
+        return self.pokrov.is_connected()
 
     def handle_measure_error(self, a_error_msg):
         logging.error("Во время измерения произошла ошибка, измерение будет остановлено")

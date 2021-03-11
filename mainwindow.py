@@ -1,5 +1,6 @@
 from logging.handlers import RotatingFileHandler
 import logging
+import time
 import os
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -61,8 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_extra_commands(self.cmd_tree)
             self.set_completer(self.cmd_tree)
 
-            self.measure_conductor = MeasureConductor(self.ui.gnrw_ip_edit.text(), self.settings,
-                                                      self.graphs_control, self.cmd_tree)
+            self.measure_conductor = MeasureConductor(self.settings, self.graphs_control, self.cmd_tree)
             self.measure_conductor.tektronix_is_ready.connect(self.tektronix_is_ready)
             self.measure_conductor.gnrw_state_changed.connect(self.gnrw_state_changed)
 
@@ -172,7 +172,6 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             if self.measure_conductor.exec_cmd("*IDN?"):
                 self.lock_interface(True)
-            logging.info("Успешное соединение")
         except ConnectionRefusedError:
             logging.error("Не удалось подключиться к спектроанализатору. Проверьте IP.")
 
@@ -271,21 +270,35 @@ class MainWindow(QtWidgets.QMainWindow):
         measure_path = self.ui.measure_path_edit.text()
         measure_filename = self.ui.save_file_name_edit.text()
         if measure_path and measure_filename:
-            self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
 
-            comment = self.ui.comment_text_edit.toPlainText()
-            configs = self.measure_manager.get_enabled_configs()
-            try:
-                if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
-                    self.lock_interface(True)
-            except ConnectionRefusedError:
-                QtWidgets.QMessageBox.critical(self, "Ошибка",
-                                               "Не удалось установить соединение со спектроанализатором. Проверьте IP.",
-                                               QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
+            start = True
+            if not self.measure_conductor.is_gnrw_connected():
+                self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
+                for i in range(100000):
+                    self.tick()
+
+                if not self.measure_conductor.is_gnrw_connected():
+                    res = QtWidgets.QMessageBox.critical(self, "Предупреждение",
+                                                         "Не удалось подключиться к покрову. Продолжить?",
+                                                         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                         QtWidgets.QMessageBox.No)
+                    if res == QtWidgets.QMessageBox.No:
+                        start = False
+
+            if start:
+                comment = self.ui.comment_text_edit.toPlainText()
+                configs = self.measure_manager.get_enabled_configs()
+                try:
+                    if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
+                        self.lock_interface(True)
+                except ConnectionRefusedError:
+                    QtWidgets.QMessageBox.critical(
+                        self, "Ошибка", "Не удалось установить соединение со спектроанализатором. Проверьте IP.",
+                        QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
         else:
-            QtWidgets.QMessageBox.critical(self, "Ошибка",
-                                           "Необходимо задать каталог для сохранения и имя сохраняемого файла",
-                                           QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
+            QtWidgets.QMessageBox.critical(
+                self, "Ошибка", "Необходимо задать каталог для сохранения и имя сохраняемого файла",
+                QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
 
     def stop_measure_button_clicked(self):
         self.measure_conductor.stop()
