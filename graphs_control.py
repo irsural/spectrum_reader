@@ -5,29 +5,34 @@ import math
 import csv
 import os
 
-from pyqtgraph import PlotWidget, mkPen, exporters, PlotDataItem
+from pyqtgraph import mkPen, exporters, PlotDataItem
 from PyQt5 import QtCore, QtWidgets, QtGui
 import pyqtgraph
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
 from irspy import utils
 
+from graphs_edit_dialog import GraphsEditDialog
+
 
 class GraphsControl(QtCore.QObject):
     COLORS = (
-        (255, 0, 0),
-        (0, 255, 0),
-        (0, 0, 255),
-        (0, 204, 204),
-        (204, 0, 102),
-        (204, 204, 0),
-        (255, 0, 255),
-        (102, 153, 153),
-        (255, 153, 0),
-        (102, 204, 255),
-        (0, 255, 153),
-        (204, 102, 255),
+        "#FF0000",
+        "#00FF00",
+        "#0000FF",
+        "#00CCCC",
+        "#CC000C",
+        "#CCCC00",
+        "#FF00FF",
+        "#0C9999",
+        "#FF9900",
+        "#66CCFF",
+        "#00FF99",
+        "#CC66255",
     )
+
+    DEFAULT_PEN_WIDTH = 2
+    BOLD_PEN_WIDTH = 4
 
     graph_points_count_changed = QtCore.pyqtSignal(int)
 
@@ -49,6 +54,7 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.addLegend()
 
         self.graphs_data: Dict[str, Tuple[List, List]] = {}
+        self.graphs_styles: Dict[str, Tuple[str, bool, bool]] = {}
         self.points_count = 0
 
     def clear(self):
@@ -58,13 +64,20 @@ class GraphsControl(QtCore.QObject):
     def log_scale_enable(self, a_enable):
         self.graph_widget.plotItem.setLogMode(x=a_enable, y=False)
 
+    def open_graphs_edit_dialog(self):
+        graphs_edit_dialog = GraphsEditDialog(self.graphs_styles, self.settings)
+        graphs_edit_dialog.exec()
+        graphs_edit_dialog.close()
+
     def draw(self, graph_name, a_x_data, a_y_data):
         if graph_name not in self.graphs_data:
             # Это первые данные для графика с именем graph_name
             graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
 
-            self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=mkPen(color=graph_color, width=2), name=graph_name)
+            pen = mkPen(color=graph_color, width=GraphsControl.DEFAULT_PEN_WIDTH)
+            self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
             self.graphs_data[graph_name] = (a_x_data, a_y_data)
+            self.graphs_styles[graph_name] = (graph_color, False, False)
         else:
             x_data, y_data = self.graphs_data[graph_name]
             x_data.extend(a_x_data)

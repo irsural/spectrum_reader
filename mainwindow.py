@@ -315,8 +315,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if filename:
             self.graphs_control.import_from_csv(filename)
 
-    def graphs_button_clicked(self):
-        pass
+    @exception_decorator_print
+    def graphs_button_clicked(self, _):
+        self.graphs_control.open_graphs_edit_dialog()
 
     def clear_graph_button_clicked(self):
         self.graphs_control.clear()
