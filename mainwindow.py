@@ -111,8 +111,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.graphs_button.clicked.connect(self.graphs_button_clicked)
         self.ui.clear_graph_button.clicked.connect(self.clear_graph_button_clicked)
         self.ui.points_count_spinbox.editingFinished.connect(self.graph_points_count_changed)
+        self.ui.reset_graph_points_count_button.clicked.connect(self.reset_graph_points_count_button_clicked)
 
-        self.graphs_control.graph_points_count_changed.connect(self.set_graph_points_count)
+        self.graphs_control.graph_points_count_changed.connect(self.update_graph_points_count)
 
     def set_completer(self, a_cmd_tree: dict):
         cmd_completer = CmdCompleter(a_cmd_tree, self)
@@ -321,11 +322,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.graphs_control.clear()
 
     def graph_points_count_changed(self):
-        if self.ui.points_count_spinbox.value() != self.settings.graph_points_count:
-            self.graphs_control.set_points_count(self.ui.points_count_spinbox.value())
-            self.settings.graph_points_count = self.ui.points_count_spinbox.value()
+        self.graphs_control.set_points_count(self.ui.points_count_spinbox.value())
+        self.settings.graph_points_count = self.ui.points_count_spinbox.value()
 
-    def set_graph_points_count(self, a_points_count: int):
+    def reset_graph_points_count_button_clicked(self):
+        self.graphs_control.reset_graph_points_count()
+
+    def update_graph_points_count(self, a_points_count: int):
         self.ui.points_count_spinbox.setValue(a_points_count)
 
     def open_about(self):

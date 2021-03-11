@@ -73,33 +73,58 @@ class GraphsControl(QtCore.QObject):
             target_plot_item = list(filter(lambda p: p.name() == graph_name, plot_data_items))[0]
             target_plot_item.setData(x=x_data, y=y_data)
 
+        graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
+        self.graph_points_count_changed.emit(graph_points_count)
+
         # ax = pw.getAxis('bottom')
         # dx = [(value, str(value))]
         # ax.setTicks([dx, []])
 
-        self.graph_points_count_changed.emit(len(self.graphs_data[graph_name][0]))
+    def __get_plot_with_name(self, a_graph_name) -> PlotDataItem:
+        for plot in self.graph_widget.plotItem.listDataItems():
+            if plot.name() == a_graph_name:
+                return plot
+        else:
+            assert False, f"Не удалось найти график с именем {a_graph_name}"
+
+    def __set_graph_points_count(self, a_graph_name, a_count):
+        x_data, y_data = self.graphs_data[a_graph_name]
+        if x_data:
+            if a_count > len(x_data):
+                a_count = len(x_data)
+
+            new_data_indices = []
+            factor = (x_data[-1] / x_data[0]) ** (1 / (a_count - 1))
+            x = x_data[0]
+            for i in range(1, a_count + 1):
+                idx = bisect.bisect_right(x_data, x) - 1
+                new_data_indices.append(idx)
+                x *= factor
+
+            new_x_data = [x_data[i] for i in new_data_indices]
+            new_y_data = [y_data[i] for i in new_data_indices]
+
+            plot = self.__get_plot_with_name(a_graph_name)
+            plot.setData(x=new_x_data, y=new_y_data)
+
+            return a_count
+        else:
+            return 0
 
     def set_points_count(self, a_count):
         if self.graphs_data:
-            for graph_number, (_, (x_data, y_data)) in enumerate(self.graphs_data.items()):
+            for graph_name in self.graphs_data.keys():
+                new_points_count = self.__set_graph_points_count(graph_name, a_count)
+                self.graph_points_count_changed.emit(new_points_count)
+
+    def reset_graph_points_count(self):
+        if self.graphs_data:
+            for graph_number, (x_data, y_data) in enumerate(self.graphs_data.values()):
                 if x_data:
-                    if a_count > len(x_data):
-                        a_count = len(x_data)
-                        logging.warning(f"Количество точек на графике = {len(x_data)}")
-
-                    new_data_indices = []
-                    factor = (x_data[-1] / x_data[0]) ** (1 / (a_count - 1))
-                    x = x_data[0]
-                    for i in range(1, a_count + 1):
-                        idx = bisect.bisect_right(x_data, x) - 1
-                        new_data_indices.append(idx)
-                        x *= factor
-
-                    new_x_data = [x_data[i] for i in new_data_indices]
-                    new_y_data = [y_data[i] for i in new_data_indices]
-
                     plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
-                    plot_data_item.setData(x=new_x_data, y=new_y_data)
+                    plot_data_item.setData(x=x_data, y=y_data)
+
+                    self.graph_points_count_changed.emit(len(x_data))
 
     def get_current_x_range(self):
         x_min = 9e999
