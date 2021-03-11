@@ -1,5 +1,6 @@
 from typing import Optional, Tuple, List, Dict
 from collections import deque
+from datetime import datetime
 from decimal import Decimal
 from enum import IntEnum
 import logging
@@ -66,6 +67,8 @@ class MeasureConductor(QtCore.QObject):
 
     GNRW_SYNC_DELAY_S = 2
 
+    DATE_FORMAT = "%Y%m%d %H%M%S"
+
     def __init__(self, a_gnrw_ip: str, a_settings, a_graphs_control: GraphsControl, a_cmd_tree: dict, a_parent=None):
         super().__init__(parent=a_parent)
 
@@ -112,7 +115,6 @@ class MeasureConductor(QtCore.QObject):
     def sa_connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
         self.spec.timeout = 3
-        logging.debug("Connected")
 
     def gnrw_connect(self, a_ip: str):
         self.pokrov.connect(a_ip)
@@ -344,37 +346,47 @@ class MeasureConductor(QtCore.QObject):
 
     def save_results(self, a_filename):
         if self.save_folder:
-            self.graphs_control.save_to_file(self.save_folder, a_filename)
+            date_str = datetime.now().strftime(MeasureConductor.DATE_FORMAT)
+            frequency_min, frequency_max = self.graphs_control.get_current_x_range()
+            filename = f"{self.save_folder}/{date_str} {a_filename} {frequency_min}-{frequency_max}"
 
-            full_measure_config = {"Комментарий": self.comment}
+            self.graphs_control.save_to_file(filename)
+
+            full_measure_config = {"Комментарий": self.comment.split("\n")}
             config_gen = self.get_next_config_deque()
             for name, config in config_gen:
                 full_measure_config[name] = config.cmd_list()
 
-            with open(f"{self.save_folder}/{a_filename}.json", 'w') as config_file:
+            with open(f"{filename}.json", 'w') as config_file:
                 config_file.write(json.dumps(full_measure_config, indent=4, ensure_ascii=False))
 
     def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder, a_save_filename, a_comment):
         self.reset()
         if a_configs:
-            if tek.check_connection(self.spec):
-                self.current_configs = a_configs
-                self.configs_gen = self.get_next_config_deque()
-                _, self.current_config = next(self.configs_gen)
-                self.current_cmd_queue = deque(self.current_config.cmd_list())
-                self.wait_timer.start(0)
-                self.tek_status = self.TekStatus.READY
-
-                self.save_folder = a_save_folder
-                self.save_filename = a_save_filename
-                self.comment = a_comment
-
-                self.current_measure_graph_number = 0
-
-                self.started = True
+            self.sa_connect(self.settings.sa_ip)
+            try:
+                connection_ok = tek.check_connection(self.spec)
+            except ConnectionRefusedError:
+                logging.error("Не удалось подключиться к спектроанализатору. Проверьте IP.")
             else:
-                logging.error("Не удалось установить соединение, необходимо вручную сбросить "
-                              "Remote Interface на спектроанализаторе")
+                if connection_ok:
+                    self.current_configs = a_configs
+                    self.configs_gen = self.get_next_config_deque()
+                    _, self.current_config = next(self.configs_gen)
+                    self.current_cmd_queue = deque(self.current_config.cmd_list())
+                    self.wait_timer.start(0)
+                    self.tek_status = self.TekStatus.READY
+
+                    self.save_folder = a_save_folder
+                    self.save_filename = a_save_filename
+                    self.comment = a_comment
+
+                    self.current_measure_graph_number = 0
+
+                    self.started = True
+                else:
+                    logging.error("Не удалось установить соединение, необходимо вручную сбросить "
+                                  "Remote Interface на спектроанализаторе")
         return self.started
 
     def exec_cmd(self, a_cmd: str):

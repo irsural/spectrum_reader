@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.ui.measure_path_edit.setText(self.settings.save_folder_path)
             self.ui.save_file_name_edit.setText(self.settings.save_file_name)
-            self.ui.measure_comment_edit.setText(self.settings.measure_comment)
+            self.ui.comment_text_edit.insertPlainText(self.settings.measure_comment)
             self.ui.sa_ip_edit.setText(self.settings.sa_ip)
             self.ui.gnrw_ip_edit.setText(self.settings.gnrw_ip)
             self.ui.points_count_spinbox.setValue(self.settings.graph_points_count)
@@ -63,7 +63,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.measure_conductor = MeasureConductor(self.ui.gnrw_ip_edit.text(), self.settings,
                                                       self.graphs_control, self.cmd_tree)
-            self.measure_conductor.sa_connect(self.settings.sa_ip)
             self.measure_conductor.tektronix_is_ready.connect(self.tektronix_is_ready)
             self.measure_conductor.gnrw_state_changed.connect(self.gnrw_state_changed)
 
@@ -83,6 +82,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def connect_all(self):
         self.ui.open_about_action.triggered.connect(self.open_about)
 
+        self.ui.sa_ip_edit.textChanged.connect(self.sa_ip_changed)
+        self.ui.gnrw_ip_edit.textChanged.connect(self.gnrw_ip_changed)
+
         self.ui.send_cmd_button.clicked.connect(self.send_button_clicked)
         self.ui.idn_button.clicked.connect(self.idn_button_clicked)
         self.ui.error_buttons.clicked.connect(self.errors_button_clicked)
@@ -94,7 +96,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
         self.ui.save_file_name_edit.textChanged.connect(self.save_file_name_changed)
-        self.ui.measure_comment_edit.textChanged.connect(self.measure_comment_changed)
+        self.ui.comment_text_edit.textChanged.connect(self.comment_changed)
+        self.ui.edit_comment_button.clicked.connect(self.edit_comment_button_clicked)
         self.ui.add_measure_button.clicked.connect(self.add_measure_button_clicked)
         self.ui.remove_measure_button.clicked.connect(self.remove_measure_button_clicked)
         self.ui.copy_measure_button.clicked.connect(self.copy_measure_button_clicked)
@@ -143,6 +146,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.move_measure_up_button.setDisabled(a_lock)
         self.ui.move_measure_down_button.setDisabled(a_lock)
 
+        self.ui.save_file_name_edit.setDisabled(a_lock)
+        self.ui.comment_text_edit.setDisabled(a_lock)
+        self.ui.edit_comment_button.setDisabled(a_lock)
+
         self.ui.start_measure_button.setDisabled(a_lock)
 
     def tektronix_is_ready(self):
@@ -158,12 +165,21 @@ class MainWindow(QtWidgets.QMainWindow):
         a_cmd_tree[MeasureConductor.SPEC_CMD_READ_DELAY] = {"desc": "Wait N seconds before reading the answer"}
         a_cmd_tree[MeasureConductor.GNRW_COMMANDS_NODE_NAME] = MeasureConductor.GNRW_COMMANDS_TREE
 
+    def sa_ip_changed(self, a_text):
+        self.settings.sa_ip = a_text
+
     def sa_connect_button_clicked(self):
-        self.settings.sa_ip = self.ui.sa_ip_edit.text()
-        self.measure_conductor.sa_connect(self.ui.sa_ip_edit.text())
+        try:
+            if self.measure_conductor.exec_cmd("*IDN?"):
+                self.lock_interface(True)
+            logging.info("Успешное соединение")
+        except ConnectionRefusedError:
+            logging.error("Не удалось подключиться к спектроанализатору. Проверьте IP.")
+
+    def gnrw_ip_changed(self, a_text):
+        self.settings.gnrw_ip = a_text
 
     def gnrw_connect_button_clicked(self):
-        self.settings.gnrw_ip = self.ui.gnrw_ip_edit.text()
         self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
 
     def gnrw_state_changed(self, a_connected, a_id):
@@ -218,8 +234,15 @@ class MainWindow(QtWidgets.QMainWindow):
     def save_file_name_changed(self, a_filename):
         self.settings.save_file_name = a_filename
 
-    def measure_comment_changed(self, a_comment):
-        self.settings.measure_comment = a_comment
+    def comment_changed(self):
+        self.settings.measure_comment = self.ui.comment_text_edit.toPlainText()
+
+    def edit_comment_button_clicked(self):
+        text, ok = QtWidgets.QInputDialog.getMultiLineText(self, "Ввод комментария", "Комментарий",
+                                                           self.ui.comment_text_edit.toPlainText())
+        if ok:
+            self.ui.comment_text_edit.clear()
+            self.ui.comment_text_edit.insertPlainText(text)
 
     def add_measure_button_clicked(self):
         self.measure_manager.new_measure()
@@ -247,28 +270,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         measure_path = self.ui.measure_path_edit.text()
         measure_filename = self.ui.save_file_name_edit.text()
-
         if measure_path and measure_filename:
+            self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
 
-            csv_full_filename = f"{measure_path}/{measure_filename}.csv"
-            png_full_filename = f"{measure_path}/{measure_filename}.png"
-            start_measure = True
-            if os.path.isfile(csv_full_filename) or os.path.isfile(png_full_filename):
-                res = QtWidgets.QMessageBox.question(self, "Предупреждение",
-                                                     f"Измерение {measure_filename} уже существует и будет перезаписано. "
-                                                     f"Продолжить?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                                     QtWidgets.QMessageBox.Yes)
-                if res == QtWidgets.QMessageBox.No:
-                    start_measure = False
-
-            if start_measure:
-                self.sa_connect_button_clicked()
-                self.gnrw_connect_button_clicked()
-
-                comment = self.ui.measure_comment_edit.text()
-                configs = self.measure_manager.get_enabled_configs()
+            comment = self.ui.comment_text_edit.toPlainText()
+            configs = self.measure_manager.get_enabled_configs()
+            try:
                 if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
                     self.lock_interface(True)
+            except ConnectionRefusedError:
+                QtWidgets.QMessageBox.critical(self, "Ошибка",
+                                               "Не удалось установить соединение со спектроанализатором. Проверьте IP.",
+                                               QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
         else:
             QtWidgets.QMessageBox.critical(self, "Ошибка",
                                            "Необходимо задать каталог для сохранения и имя сохраняемого файла",

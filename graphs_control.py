@@ -1,5 +1,4 @@
 from typing import List, Dict, Tuple
-from datetime import datetime
 import logging
 import bisect
 import math
@@ -31,8 +30,6 @@ class GraphsControl(QtCore.QObject):
     )
 
     graph_points_count_changed = QtCore.pyqtSignal(int)
-
-    DATE_FORMAT = "%Y%m%d %H%M%S"
 
     def __init__(self, a_graph_widget: pyqtgraph.PlotWidget, a_settings: QtSettings, a_parent=None):
         super().__init__(parent=a_parent)
@@ -104,26 +101,22 @@ class GraphsControl(QtCore.QObject):
                     plot_data_item: PlotDataItem = self.graph_widget.plotItem.listDataItems()[graph_number]
                     plot_data_item.setData(x=new_x_data, y=new_y_data)
 
-    def get_current_graphs_range(self):
+    def get_current_x_range(self):
         x_min = 9e999
         x_max = 0
         for xs, _ in self.graphs_data.values():
             x_min = x_min if x_min < xs[0] else xs[0]
             x_max = x_max if x_max > xs[-1] else xs[-1]
 
-        return x_min, x_max
+        x_min_units = utils.value_to_user_with_units("Гц")(x_min)
+        x_max_units = utils.value_to_user_with_units("Гц")(x_max)
 
-    def save_to_file(self, a_save_folder, a_filename):
+        return x_min_units, x_max_units
+
+    def save_to_file(self, a_filename):
         if self.graph_widget.plotItem.listDataItems():
-            date_str = datetime.now().strftime(GraphsControl.DATE_FORMAT)
-            x_start, x_end = self.get_current_graphs_range()
-
-            x_start_units = utils.value_to_user_with_units("Гц")(x_start)
-            x_end_units = utils.value_to_user_with_units("Гц")(x_end)
-
-            filename = f"{date_str} {a_filename} {x_start_units}-{x_end_units}"
-            png_filename = f"{a_save_folder}/{filename}.png"
-            csv_filename = f"{a_save_folder}/{filename}.csv"
+            png_filename = f"{a_filename}.png"
+            csv_filename = f"{a_filename}.csv"
 
             png_exporter = exporters.ImageExporter(self.graph_widget.plotItem)
             png_exporter.parameters()['width'] = 1e3
@@ -155,7 +148,10 @@ class GraphsControl(QtCore.QObject):
                         data = x_data if column % 2 == 0 else y_data
                         data[math.floor(column // 2)].append(float(p))
 
-        path, filename = os.path.split(a_filename)
-        measure_name = filename[:filename.rfind(".")]
+        _, filename = os.path.split(a_filename)
+        # Имя файла без csv
+        measure_filename = filename[:filename.rfind(".")]
+        # Имя измерения, без даты и диапазона частот
+        measure_name = filename.split()[2]
         for number, (xs, ys) in enumerate(zip(x_data, y_data)):
             self.draw(f"{measure_name}_{number}", xs, ys)
