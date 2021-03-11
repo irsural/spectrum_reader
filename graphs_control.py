@@ -31,9 +31,6 @@ class GraphsControl(QtCore.QObject):
         "#CC66255",
     )
 
-    DEFAULT_PEN_WIDTH = 2
-    BOLD_PEN_WIDTH = 4
-
     graph_points_count_changed = QtCore.pyqtSignal(int)
 
     def __init__(self, a_graph_widget: pyqtgraph.PlotWidget, a_settings: QtSettings, a_parent=None):
@@ -65,7 +62,7 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.plotItem.setLogMode(x=a_enable, y=False)
 
     def open_graphs_edit_dialog(self):
-        graphs_edit_dialog = GraphsEditDialog(self.graphs_styles, self.settings)
+        graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.settings)
         graphs_edit_dialog.exec()
         graphs_edit_dialog.close()
 
@@ -74,7 +71,7 @@ class GraphsControl(QtCore.QObject):
             # Это первые данные для графика с именем graph_name
             graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
 
-            pen = mkPen(color=graph_color, width=GraphsControl.DEFAULT_PEN_WIDTH)
+            pen = mkPen(color=graph_color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
             self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
             self.graphs_data[graph_name] = (a_x_data, a_y_data)
             self.graphs_styles[graph_name] = (graph_color, False, False)
