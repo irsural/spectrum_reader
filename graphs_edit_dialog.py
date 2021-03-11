@@ -18,17 +18,19 @@ class GraphsEditDialog(QtWidgets.QDialog):
         NAME = 0,
         COLOR = 1,
         BOLD = 2,
-        HIDDEN = 3,
+        SHOW = 3,
         DELETE = 4,
         COUNT = 5
 
     class StylesItem(IntEnum):
         COLOR = 0,
         BOLD = 1,
-        HIDDEN = 2
+        SHOW = 2
 
     DEFAULT_PEN_WIDTH = 2
     BOLD_PEN_WIDTH = 4
+
+    enable_graph = QtCore.pyqtSignal(str, bool)
 
     def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]],
                  a_settings: QtSettings, a_parent=None):
@@ -62,14 +64,14 @@ class GraphsEditDialog(QtWidgets.QDialog):
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         a_table_widget.setItem(a_row, a_column, item)
 
-    def add_graph_to_table(self, a_name, a_color, a_bold, a_hidden):
+    def add_graph_to_table(self, a_name, a_color, a_bold, a_show):
         row_idx = self.ui.graphs_table.rowCount()
         self.ui.graphs_table.insertRow(row_idx)
 
         self.ui.graphs_table.setItem(row_idx, GraphsEditDialog.Column.NAME, QtWidgets.QTableWidgetItem(a_name))
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.COLOR)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.BOLD)
-        self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.HIDDEN)
+        self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.SHOW)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.DELETE)
 
         self.ui.graphs_table.item(row_idx, GraphsEditDialog.Column.COLOR).setBackground(QtGui.QColor(a_color))
@@ -80,9 +82,9 @@ class GraphsEditDialog(QtWidgets.QDialog):
         cb.toggled.connect(self.bold_graph_checkbox_toggled)
 
         cb = QtWidgets.QCheckBox()
-        self.ui.graphs_table.setCellWidget(row_idx, GraphsEditDialog.Column.HIDDEN, qt_utils.wrap_in_layout(cb))
-        cb.setChecked(a_hidden)
-        cb.toggled.connect(self.hide_graph_checkbox_toggled)
+        self.ui.graphs_table.setCellWidget(row_idx, GraphsEditDialog.Column.SHOW, qt_utils.wrap_in_layout(cb))
+        cb.setChecked(a_show)
+        cb.toggled.connect(self.show_graph_checkbox_toggled)
 
         button = QtWidgets.QPushButton("Удалить")
         self.ui.graphs_table.setCellWidget(row_idx, GraphsEditDialog.Column.DELETE, qt_utils.wrap_in_layout(button))
@@ -115,22 +117,31 @@ class GraphsEditDialog(QtWidgets.QDialog):
                 current_pen.setColor(new_color)
                 plot.setPen(current_pen)
 
-    def hide_graph_checkbox_toggled(self, a_state):
-        pass
-
-    def bold_graph_checkbox_toggled(self, a_state):
-        sender_checkbox = self.sender()
+    def __get_row_by_sender_widget(self, a_sender, a_sender_column):
         for row in range(self.ui.graphs_table.rowCount()):
-            cell_widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.BOLD)
-            bold_checkbox = qt_utils.unwrap_from_layout(cell_widget)
+            cell_widget = self.ui.graphs_table.cellWidget(row, a_sender_column)
+            widget = qt_utils.unwrap_from_layout(cell_widget)
 
-            if sender_checkbox == bold_checkbox:
+            if a_sender == widget:
                 selected_row = row
                 break
         else:
             assert False, "Не найдена строка таблицы с виджетом-отправителем сигнала"
 
-        name = self.__get_name_by_row(selected_row)
+        return selected_row
+
+    def show_graph_checkbox_toggled(self, a_state):
+        sender_checkbox = self.sender()
+        graph_row = self.__get_row_by_sender_widget(sender_checkbox, GraphsEditDialog.Column.SHOW)
+        name = self.__get_name_by_row(graph_row)
+
+        self.enable_graph.emit(name, a_state)
+
+    def bold_graph_checkbox_toggled(self, a_state):
+        sender_checkbox = self.sender()
+        graph_row = self.__get_row_by_sender_widget(sender_checkbox, GraphsEditDialog.Column.BOLD)
+
+        name = self.__get_name_by_row(graph_row)
         plot = self.__get_plot_by_name(name)
 
         current_pen: QtGui.QPen = plot.opts['pen']

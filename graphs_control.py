@@ -63,8 +63,21 @@ class GraphsControl(QtCore.QObject):
 
     def open_graphs_edit_dialog(self):
         graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.settings)
+        graphs_edit_dialog.enable_graph.connect(self.enable_graph)
         graphs_edit_dialog.exec()
         graphs_edit_dialog.close()
+
+    def enable_graph(self, a_graph_name, a_enable):
+        if a_enable:
+            color = self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.COLOR]
+            pen = mkPen(color=color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
+
+            x_data, y_data = self.graphs_data[a_graph_name]
+            self.graph_widget.plot(x=x_data, y=y_data, pen=pen, name=a_graph_name)
+            self.__set_graph_points_count(a_graph_name, self.settings.graph_points_count)
+        else:
+            plot = self.__get_plot_with_name(a_graph_name)
+            self.graph_widget.removeItem(plot)
 
     def draw(self, graph_name, a_x_data, a_y_data):
         if graph_name not in self.graphs_data:
@@ -74,7 +87,7 @@ class GraphsControl(QtCore.QObject):
             pen = mkPen(color=graph_color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
             self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
             self.graphs_data[graph_name] = (a_x_data, a_y_data)
-            self.graphs_styles[graph_name] = (graph_color, False, False)
+            self.graphs_styles[graph_name] = (graph_color, False, True)
         else:
             x_data, y_data = self.graphs_data[graph_name]
             x_data.extend(a_x_data)

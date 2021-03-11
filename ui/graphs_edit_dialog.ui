@@ -65,7 +65,7 @@
          </column>
          <column>
           <property name="text">
-           <string>Скрыть</string>
+           <string>Показать</string>
           </property>
          </column>
          <column>

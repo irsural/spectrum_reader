@@ -91,7 +91,7 @@ class Ui_graphs_edit_dialog(object):
         item = self.graphs_table.horizontalHeaderItem(2)
         item.setText(_translate("graphs_edit_dialog", "Жирный"))
         item = self.graphs_table.horizontalHeaderItem(3)
-        item.setText(_translate("graphs_edit_dialog", "Скрыть"))
+        item.setText(_translate("graphs_edit_dialog", "Показать"))
         item = self.graphs_table.horizontalHeaderItem(4)
         item.setText(_translate("graphs_edit_dialog", "Удалить"))
         self.show_all_button.setText(_translate("graphs_edit_dialog", "Показать все"))
