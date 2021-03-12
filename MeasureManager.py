@@ -171,7 +171,9 @@ class MeasureManager(QtCore.QObject):
 
                     self.save_config()
                 else:
-                    a_item.setText(self.measure_name_before_rename)
+                    old_name = self.measure_name_before_rename
+                    self.measure_name_before_rename = ""
+                    a_item.setText(old_name)
 
                 self.measure_name_before_rename = ""
 

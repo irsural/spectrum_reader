@@ -42,6 +42,9 @@
       <layout class="QGridLayout" name="gridLayout">
        <item row="1" column="0">
         <widget class="QTableWidget" name="graphs_table">
+         <property name="editTriggers">
+          <set>QAbstractItemView::DoubleClicked</set>
+         </property>
          <attribute name="horizontalHeaderStretchLastSection">
           <bool>true</bool>
          </attribute>

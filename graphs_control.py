@@ -68,6 +68,7 @@ class GraphsControl(QtCore.QObject):
         graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.lock, self.settings)
         graphs_edit_dialog.enable_graph.connect(self.enable_graph)
         graphs_edit_dialog.remove_graph.connect(self.remove_graph)
+        graphs_edit_dialog.rename_graph.connect(self.rename_graph)
         graphs_edit_dialog.exec()
         graphs_edit_dialog.close()
 
@@ -77,8 +78,21 @@ class GraphsControl(QtCore.QObject):
         del self.graphs_styles[a_graph_name]
         del self.graphs_data[a_graph_name]
 
+    def rename_graph(self, a_old_name, a_new_name):
+        data = self.graphs_data[a_old_name]
+        del self.graphs_data[a_old_name]
+        self.graphs_data[a_new_name] = data
+
+        plot = self.__get_plot_with_name(a_old_name)
+        plot.setData(*data, name=a_new_name)
+        self.graph_widget.plotItem.legend.removeItem(plot)
+        self.graph_widget.plotItem.legend.addItem(plot, a_new_name)
+
     def get_graphs_names(self) -> List:
         return list(self.graphs_data.keys())
+
+    def lock_changes(self, a_lock):
+        self.lock = a_lock
 
     def enable_graph(self, a_graph_name, a_enable):
         if a_enable:
@@ -220,6 +234,3 @@ class GraphsControl(QtCore.QObject):
         for graph_name, xs, ys in zip(names, x_data, y_data):
             graph_name = utils.get_allowable_name(self.graphs_data.keys(), graph_name, "{new_name} ({number})")
             self.draw_new(f"{graph_name}", xs, ys)
-
-    def lock_changes(self, a_lock):
-        self.lock = a_lock

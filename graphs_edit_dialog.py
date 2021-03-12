@@ -8,6 +8,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
 from irspy.qt.qt_settings_ini_parser import QtSettings
 from irspy.qt import qt_utils
+from irspy import utils
 
 from ui.py.graphs_edit_dialog import Ui_graphs_edit_dialog as GraphsEditForm
 
@@ -32,6 +33,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
 
     enable_graph = QtCore.pyqtSignal(str, bool)
     remove_graph = QtCore.pyqtSignal(str)
+    rename_graph = QtCore.pyqtSignal(str, str)
 
     def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]], a_lock_changes,
                  a_settings: QtSettings, a_parent=None):
@@ -53,9 +55,12 @@ class GraphsEditDialog(QtWidgets.QDialog):
         for name, style in self.graph_styles.items():
             self.add_graph_to_table(name, *style, a_lock_changes)
 
+        self.measure_name_before_rename = ""
+
         self.ui.show_all_button.clicked.connect(self.show_all_button_clicked)
         self.ui.hide_all_button.clicked.connect(self.hide_all_button_clicked)
         self.ui.delete_all_button.clicked.connect(self.delete_all_button_clicked)
+        self.ui.graphs_table.itemChanged.connect(self.measure_renamed)
 
         self.ui.ok_button.clicked.connect(self.ok_button_clicked)
         self.ui.cancel_button.clicked.connect(self.reject)
@@ -115,8 +120,9 @@ class GraphsEditDialog(QtWidgets.QDialog):
 
     def cell_double_clicked(self, a_row, a_column):
         name = self.__get_name_by_row(a_row)
-        color = self.graph_styles[name][GraphsEditDialog.StylesItem.COLOR]
+
         if a_column == GraphsEditDialog.Column.COLOR:
+            color = self.graph_styles[name][GraphsEditDialog.StylesItem.COLOR]
             new_color = QtWidgets.QColorDialog.getColor(QtGui.QColor(color))
             if new_color.isValid():
                 self.ui.graphs_table.item(a_row, GraphsEditDialog.Column.COLOR).setBackground(new_color)
@@ -125,6 +131,34 @@ class GraphsEditDialog(QtWidgets.QDialog):
                 current_pen: QtGui.QPen = plot.opts['pen']
                 current_pen.setColor(new_color)
                 plot.setPen(current_pen)
+
+        elif a_column == GraphsEditDialog.Column.NAME:
+            self.measure_name_before_rename = name
+            assert(self.measure_name_before_rename != "")
+
+    def measure_renamed(self, a_item: QtWidgets.QTableWidgetItem):
+        if a_item.column() == GraphsEditDialog.Column.NAME:
+            if self.measure_name_before_rename:
+                new_name = a_item.text()
+                if new_name:
+                    new_name = utils.get_allowable_name(self.graph_styles.keys(), new_name)
+
+                    styles = self.graph_styles[self.measure_name_before_rename]
+                    del self.graph_styles[self.measure_name_before_rename]
+                    self.graph_styles[new_name] = styles
+
+                    if a_item.text() != new_name:
+                        # Если заданное имя уже существует и new_name подправлено в get_allowable_name
+                        self.measure_name_before_rename = ""
+                        a_item.setText(new_name)
+
+                    self.rename_graph.emit(self.measure_name_before_rename, new_name)
+                else:
+                    old_name = self.measure_name_before_rename
+                    self.measure_name_before_rename = ""
+                    a_item.setText(old_name)
+
+                self.measure_name_before_rename = ""
 
     def __get_row_by_sender_widget(self, a_sender, a_sender_column):
         for row in range(self.ui.graphs_table.rowCount()):

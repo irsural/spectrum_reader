@@ -332,6 +332,9 @@
                <verstretch>2</verstretch>
               </sizepolicy>
              </property>
+             <property name="editTriggers">
+              <set>QAbstractItemView::DoubleClicked</set>
+             </property>
              <property name="selectionMode">
               <enum>QAbstractItemView::ExtendedSelection</enum>
              </property>

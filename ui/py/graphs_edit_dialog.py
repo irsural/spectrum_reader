@@ -31,6 +31,7 @@ class Ui_graphs_edit_dialog(object):
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
         self.graphs_table = QtWidgets.QTableWidget(graphs_edit_dialog)
+        self.graphs_table.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked)
         self.graphs_table.setObjectName("graphs_table")
         self.graphs_table.setColumnCount(5)
         self.graphs_table.setRowCount(0)
