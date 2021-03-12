@@ -151,7 +151,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.comment_text_edit.setDisabled(a_lock)
         self.ui.edit_comment_button.setDisabled(a_lock)
 
+        self.ui.csv_import_button.setDisabled(a_lock)
+        self.ui.copy_measure_button.setDisabled(a_lock)
+
         self.ui.start_measure_button.setDisabled(a_lock)
+
+        self.graphs_control.lock_changes(a_lock)
 
     def tektronix_is_ready(self):
         self.lock_interface(False)
@@ -275,7 +280,7 @@ class MainWindow(QtWidgets.QMainWindow):
             start = True
             if not self.measure_conductor.is_gnrw_connected():
                 self.measure_conductor.gnrw_connect(self.ui.gnrw_ip_edit.text())
-                for i in range(100000):
+                for i in range(250000):
                     self.tick()
 
                 if not self.measure_conductor.is_gnrw_connected():
@@ -289,12 +294,17 @@ class MainWindow(QtWidgets.QMainWindow):
             if start:
                 comment = self.ui.comment_text_edit.toPlainText()
                 configs = self.measure_manager.get_enabled_configs()
-                try:
-                    if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
-                        self.lock_interface(True)
-                except ConnectionRefusedError:
+                if self.measure_conductor.verify_configs(configs):
+                    try:
+                        if self.measure_conductor.start(configs, measure_path, measure_filename, comment):
+                            self.lock_interface(True)
+                    except ConnectionRefusedError:
+                        QtWidgets.QMessageBox.critical(
+                            self, "Ошибка", "Не удалось установить соединение со спектроанализатором. Проверьте IP.",
+                            QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
+                else:
                     QtWidgets.QMessageBox.critical(
-                        self, "Ошибка", "Не удалось установить соединение со спектроанализатором. Проверьте IP.",
+                        self, "Ошибка", "В конфигурациях обнаружены ошибки. Подробности в логе.",
                         QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
         else:
             QtWidgets.QMessageBox.critical(

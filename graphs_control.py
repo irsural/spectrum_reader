@@ -54,15 +54,18 @@ class GraphsControl(QtCore.QObject):
         self.graphs_styles: Dict[str, Tuple[str, bool, bool]] = {}
         self.points_count = 0
 
+        self.lock = False
+
     def clear(self):
         self.graph_widget.plotItem.clear()
         self.graphs_data.clear()
+        self.graphs_styles.clear()
 
     def log_scale_enable(self, a_enable):
         self.graph_widget.plotItem.setLogMode(x=a_enable, y=False)
 
     def open_graphs_edit_dialog(self):
-        graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.settings)
+        graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.lock, self.settings)
         graphs_edit_dialog.enable_graph.connect(self.enable_graph)
         graphs_edit_dialog.remove_graph.connect(self.remove_graph)
         graphs_edit_dialog.exec()
@@ -73,6 +76,9 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.removeItem(plot)
         del self.graphs_styles[a_graph_name]
         del self.graphs_data[a_graph_name]
+
+    def get_graphs_names(self) -> List:
+        return list(self.graphs_data.keys())
 
     def enable_graph(self, a_graph_name, a_enable):
         if a_enable:
@@ -86,22 +92,28 @@ class GraphsControl(QtCore.QObject):
             plot = self.__get_plot_with_name(a_graph_name)
             self.graph_widget.removeItem(plot)
 
-    def draw(self, graph_name, a_x_data, a_y_data):
-        if graph_name not in self.graphs_data:
-            # Это первые данные для графика с именем graph_name
-            graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
+    def draw_new(self, graph_name, a_x_data, a_y_data):
+        assert graph_name not in self.graphs_data, "Нельзя добавлять существующие графики через draw_new()"
 
-            pen = mkPen(color=graph_color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
-            self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
-            self.graphs_data[graph_name] = (a_x_data, a_y_data)
-            self.graphs_styles[graph_name] = (graph_color, False, True)
-        else:
-            x_data, y_data = self.graphs_data[graph_name]
-            x_data.extend(a_x_data)
-            y_data.extend(a_y_data)
-            plot_data_items: PlotDataItem = self.graph_widget.plotItem.listDataItems()
-            target_plot_item = list(filter(lambda p: p.name() == graph_name, plot_data_items))[0]
-            target_plot_item.setData(x=x_data, y=y_data)
+        graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
+        pen = mkPen(color=graph_color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
+        self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
+
+        self.graphs_data[graph_name] = (a_x_data, a_y_data)
+        self.graphs_styles[graph_name] = (graph_color, False, True)
+
+        graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
+        self.graph_points_count_changed.emit(graph_points_count)
+
+    def draw_append(self, graph_name, a_x_data, a_y_data):
+        assert graph_name in self.graphs_data, f"График {graph_name} не существует"
+
+        x_data, y_data = self.graphs_data[graph_name]
+        x_data.extend(a_x_data)
+        y_data.extend(a_y_data)
+        plot_data_items: PlotDataItem = self.graph_widget.plotItem.listDataItems()
+        target_plot_item = list(filter(lambda p: p.name() == graph_name, plot_data_items))[0]
+        target_plot_item.setData(x=x_data, y=y_data)
 
         graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
         self.graph_points_count_changed.emit(graph_points_count)
@@ -203,10 +215,11 @@ class GraphsControl(QtCore.QObject):
                         data = x_data if column % 2 == 0 else y_data
                         data[math.floor(column // 2)].append(float(p))
 
-        _, filename = os.path.split(a_filename)
-        # Имя файла без csv
-        measure_filename = filename[:filename.rfind(".")]
-        # Имя измерения, без даты и диапазона частот
-        measure_name = filename.split()[2]
-        for number, (xs, ys) in enumerate(zip(x_data, y_data)):
-            self.draw(f"{measure_name}_{number}", xs, ys)
+        names = [header[:header.rfind("_")] for idx, header in enumerate(headers) if idx % 2 == 0]
+
+        for graph_name, xs, ys in zip(names, x_data, y_data):
+            graph_name = utils.get_allowable_name(self.graphs_data.keys(), graph_name, "{new_name} ({number})")
+            self.draw_new(f"{graph_name}", xs, ys)
+
+    def lock_changes(self, a_lock):
+        self.lock = a_lock

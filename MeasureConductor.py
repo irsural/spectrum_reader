@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, List, Dict
-from collections import deque
+from collections import deque, defaultdict
 from datetime import datetime
 from decimal import Decimal
 from enum import IntEnum
@@ -13,6 +13,7 @@ from vxi11 import vxi11
 
 from irspy.utils import Timer, value_to_user_with_units
 from irspy.pokrov import pokrov_dll
+from irspy import utils
 
 from graphs_control import GraphsControl
 from MeasureConfig import MeasureConfig
@@ -95,6 +96,8 @@ class MeasureConductor(QtCore.QObject):
         self.pokrov = pokrov_dll.PokrovDrv()
 
         self.convert_hz = value_to_user_with_units("Гц")
+        self.graph_names_before_start = []
+        self.current_graph_number = 0
 
     def reset(self):
         self.started = False
@@ -107,6 +110,8 @@ class MeasureConductor(QtCore.QObject):
         self.save_folder = ""
         self.save_filename = ""
         self.comment = ""
+        self.graph_names_before_start = []
+        self.current_graph_number = 0
 
     def sa_connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -227,6 +232,7 @@ class MeasureConductor(QtCore.QObject):
                         try:
                             _, self.current_config = next(self.configs_gen)
                             self.current_cmd_queue = deque(self.current_config.cmd_list())
+                            self.current_graph_number = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
                             self.save_results(self.save_filename)
@@ -242,6 +248,7 @@ class MeasureConductor(QtCore.QObject):
                     self.tek_status = self.TekStatus.READY
                     binary_spectrum = tek.read_raw_answer(self.spec)
                     if binary_spectrum:
+                        self.current_graph_number += 1
                         self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
 
                 elif self.tek_status == self.TekStatus.WAIT_OPC:
@@ -332,15 +339,21 @@ class MeasureConductor(QtCore.QObject):
             frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(spec_data))
             amplitudes = self.normalize_spectrum_data(spec_data, frequencies, a_spec_params.rbw)
 
+            pokrov_state = "NO CONN."
             if self.pokrov.is_connected():
-                line_power = self.pokrov.line_power
-                ether_power = self.pokrov.ether_power
-            else:
-                line_power = -1
-                ether_power = -1
+                if True:  # Заменить на is_signal_on
+                    pokrov_state = f"УрП={self.pokrov.line_power} УрС={self.pokrov.ether_power}"
+                else:
+                    pokrov_state = "OFF"
 
-            graph_name = f"{self.save_filename} УрП={ether_power} УрС={line_power}"
-            self.graphs_control.draw(graph_name, frequencies, amplitudes)
+            graph_name = f"{self.save_filename} {pokrov_state} №{self.current_graph_number}"
+            real_graph_name = utils.get_allowable_name(self.graph_names_before_start, graph_name,
+                                                       "{new_name} ({number})")
+
+            if real_graph_name not in self.graphs_control.get_graphs_names():
+                self.graphs_control.draw_new(real_graph_name, frequencies, amplitudes)
+            else:
+                self.graphs_control.draw_append(real_graph_name, frequencies, amplitudes)
         else:
             logging.error("Неверные данные для построения графика спектра")
 
@@ -364,6 +377,22 @@ class MeasureConductor(QtCore.QObject):
             with open(f"{filename}.json", 'w') as config_file:
                 config_file.write(json.dumps(full_measure_config, indent=4, ensure_ascii=False))
 
+    @staticmethod
+    def verify_configs(a_configs: List[Tuple[str, MeasureConfig]]):
+        success_verified = True
+
+        read_op_count = []
+        for _, config in a_configs:
+            cmd_read_op_count = config.cmd_list().count(":READ:SPEC?")
+            if cmd_read_op_count != 0:
+                read_op_count.append(cmd_read_op_count)
+
+        if not all([read_op_count[0] == count for count in read_op_count]):
+            logging.error("Количество операций чтения в каждой конфигурации должно быть одинаковым, либо равным нулю")
+            success_verified = False
+
+        return success_verified
+
     def start(self, a_configs: List[Tuple[str, MeasureConfig]], a_save_folder, a_save_filename, a_comment):
         self.reset()
         if a_configs:
@@ -384,6 +413,8 @@ class MeasureConductor(QtCore.QObject):
                     self.save_folder = a_save_folder
                     self.save_filename = a_save_filename
                     self.comment = a_comment
+
+                    self.graph_names_before_start = self.graphs_control.get_graphs_names()
 
                     self.started = True
                 else:

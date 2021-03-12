@@ -33,7 +33,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
     enable_graph = QtCore.pyqtSignal(str, bool)
     remove_graph = QtCore.pyqtSignal(str)
 
-    def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]],
+    def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]], a_lock_changes,
                  a_settings: QtSettings, a_parent=None):
         super().__init__(a_parent)
 
@@ -51,7 +51,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.graph_styles = a_graph_styles
 
         for name, style in self.graph_styles.items():
-            self.add_graph_to_table(name, *style)
+            self.add_graph_to_table(name, *style, a_lock_changes)
 
         self.ui.show_all_button.clicked.connect(self.show_all_button_clicked)
         self.ui.hide_all_button.clicked.connect(self.hide_all_button_clicked)
@@ -64,16 +64,20 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.show()
 
     @staticmethod
-    def __add_non_editable_item(a_table_widget, a_row, a_column):
-        item = QtWidgets.QTableWidgetItem()
+    def __add_non_editable_item(a_table_widget, a_row, a_column, a_text=""):
+        item = QtWidgets.QTableWidgetItem(a_text)
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         a_table_widget.setItem(a_row, a_column, item)
 
-    def add_graph_to_table(self, a_name, a_color, a_bold, a_show):
+    def add_graph_to_table(self, a_name, a_color, a_bold, a_show, a_lock_changes):
         row_idx = self.ui.graphs_table.rowCount()
         self.ui.graphs_table.insertRow(row_idx)
 
-        self.ui.graphs_table.setItem(row_idx, GraphsEditDialog.Column.NAME, QtWidgets.QTableWidgetItem(a_name))
+        if a_lock_changes:
+            self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.NAME, a_name)
+        else:
+            self.ui.graphs_table.setItem(row_idx, GraphsEditDialog.Column.NAME, QtWidgets.QTableWidgetItem(a_name))
+
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.COLOR)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.BOLD)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.SHOW)
