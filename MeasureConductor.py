@@ -94,8 +94,6 @@ class MeasureConductor(QtCore.QObject):
         self.gnrw_check_connection_timer.start()
         self.pokrov = pokrov_dll.PokrovDrv()
 
-        self.current_measure_graph_number = 0
-
         self.convert_hz = value_to_user_with_units("Гц")
 
     def reset(self):
@@ -109,7 +107,6 @@ class MeasureConductor(QtCore.QObject):
         self.save_folder = ""
         self.save_filename = ""
         self.comment = ""
-        self.current_measure_graph_number = 0
 
     def sa_connect(self, a_ip: str):
         self.spec = vxi11.Instrument(a_ip)
@@ -230,7 +227,6 @@ class MeasureConductor(QtCore.QObject):
                         try:
                             _, self.current_config = next(self.configs_gen)
                             self.current_cmd_queue = deque(self.current_config.cmd_list())
-                            self.current_measure_graph_number = 0
                             logging.info("Следующая очередь команд")
                         except StopIteration:
                             self.save_results(self.save_filename)
@@ -247,7 +243,6 @@ class MeasureConductor(QtCore.QObject):
                     binary_spectrum = tek.read_raw_answer(self.spec)
                     if binary_spectrum:
                         self.draw_spectrum(binary_spectrum, self.get_specter_parameters())
-                        self.current_measure_graph_number += 1
 
                 elif self.tek_status == self.TekStatus.WAIT_OPC:
                     if tek.is_operation_completed(self.spec):
@@ -337,7 +332,14 @@ class MeasureConductor(QtCore.QObject):
             frequencies = self.calculate_x_points(a_spec_params.x_start, a_spec_params.x_stop, len(spec_data))
             amplitudes = self.normalize_spectrum_data(spec_data, frequencies, a_spec_params.rbw)
 
-            graph_name = f"{self.save_filename}_{self.current_measure_graph_number + 1}"
+            if self.pokrov.is_connected():
+                line_power = self.pokrov.line_power
+                ether_power = self.pokrov.ether_power
+            else:
+                line_power = -1
+                ether_power = -1
+
+            graph_name = f"{self.save_filename} УрП={ether_power} УрС={line_power}"
             self.graphs_control.draw(graph_name, frequencies, amplitudes)
         else:
             logging.error("Неверные данные для построения графика спектра")
@@ -382,8 +384,6 @@ class MeasureConductor(QtCore.QObject):
                     self.save_folder = a_save_folder
                     self.save_filename = a_save_filename
                     self.comment = a_comment
-
-                    self.current_measure_graph_number = 0
 
                     self.started = True
                 else:

@@ -2,5 +2,5 @@ from enum import IntEnum
 
 
 class Revisions(IntEnum):
-    SpectrumReader = 44
-    irspy = 51
+    SpectrumReader = 45
+    irspy = 52

@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Sequence
+from typing import Dict, List, Tuple
 from enum import IntEnum
 import logging
 import copy
@@ -8,6 +8,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from irspy.built_in_extensions import OrderedDictInsert
 from irspy.qt import qt_utils
+from irspy import utils
 
 from irspy.qt.qt_settings_ini_parser import QtSettings
 from config_dialog import ConfigDialog, MeasureConfig
@@ -40,15 +41,6 @@ class MeasureManager(QtCore.QObject):
     def update_cmd_tree(self, a_cmd_tree: dict):
         self.cmd_tree = a_cmd_tree
 
-    @staticmethod
-    def __get_allowable_name(a_existing_names: Sequence, a_name_template: str) -> str:
-        new_name = a_name_template
-        counter = 0
-        while new_name in a_existing_names:
-            counter += 1
-            new_name = f"{a_name_template}_{counter}"
-        return new_name
-
     def __get_measures_list(self):
         return [self.measures_table.item(row, MeasureManager.MeasureColumn.NAME).text()
                 for row in range(self.measures_table.rowCount())]
@@ -74,7 +66,7 @@ class MeasureManager(QtCore.QObject):
         selected_row = qt_utils.get_selected_row(self.measures_table)
         row_index = selected_row + 1 if selected_row is not None else self.measures_table.rowCount()
 
-        new_name = a_name if a_name else self.__get_allowable_name(self.__get_measures_list(), "Измерение")
+        new_name = a_name if a_name else utils.get_allowable_name(self.__get_measures_list(), "Измерение")
 
         measure_config = a_measure_config if a_measure_config else MeasureConfig()
         self.measures.insert(row_index, new_name, measure_config)
@@ -100,7 +92,7 @@ class MeasureManager(QtCore.QObject):
     def copy_measure(self, a_measure_number):
         measure_name = self.measures_table.item(a_measure_number, MeasureManager.MeasureColumn.NAME).text()
         current_measure = copy.deepcopy(self.measures[measure_name])
-        duplicate_name = self.__get_allowable_name(self.measures.keys(), measure_name)
+        duplicate_name = utils.get_allowable_name(self.measures.keys(), measure_name)
         self.new_measure(duplicate_name, current_measure)
 
     def swap_measures(self, a_bottom_row):
@@ -167,13 +159,13 @@ class MeasureManager(QtCore.QObject):
             if a_item.column() == MeasureManager.MeasureColumn.NAME:
                 new_name = a_item.text()
                 if new_name:
-                    new_name = self.__get_allowable_name(self.measures.keys(), new_name)
+                    new_name = utils.get_allowable_name(self.measures.keys(), new_name)
                     config = self.measures[self.measure_name_before_rename]
                     del self.measures[self.measure_name_before_rename]
                     self.measures.insert(a_item.row(), new_name, config)
 
                     if a_item.text() != new_name:
-                        # Если заданное имя уже существует и new_name подправлено в __get_allowable_name
+                        # Если заданное имя уже существует и new_name подправлено в get_allowable_name
                         self.measure_name_before_rename = ""
                         a_item.setText(new_name)
 

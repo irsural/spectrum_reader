@@ -181,7 +181,8 @@ class GraphsEditDialog(QtWidgets.QDialog):
             delete_button.click()
 
     def ok_button_clicked(self):
-        pass
+        self.apply_button_clicked()
+        self.accept()
 
     def apply_button_clicked(self):
         pass
