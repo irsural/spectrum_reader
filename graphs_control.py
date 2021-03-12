@@ -64,8 +64,15 @@ class GraphsControl(QtCore.QObject):
     def open_graphs_edit_dialog(self):
         graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.settings)
         graphs_edit_dialog.enable_graph.connect(self.enable_graph)
+        graphs_edit_dialog.remove_graph.connect(self.remove_graph)
         graphs_edit_dialog.exec()
         graphs_edit_dialog.close()
+
+    def remove_graph(self, a_graph_name):
+        plot = self.__get_plot_with_name(a_graph_name)
+        self.graph_widget.removeItem(plot)
+        del self.graphs_styles[a_graph_name]
+        del self.graphs_data[a_graph_name]
 
     def enable_graph(self, a_graph_name, a_enable):
         if a_enable:

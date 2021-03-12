@@ -31,6 +31,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
     BOLD_PEN_WIDTH = 4
 
     enable_graph = QtCore.pyqtSignal(str, bool)
+    remove_graph = QtCore.pyqtSignal(str)
 
     def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]],
                  a_settings: QtSettings, a_parent=None):
@@ -51,6 +52,10 @@ class GraphsEditDialog(QtWidgets.QDialog):
 
         for name, style in self.graph_styles.items():
             self.add_graph_to_table(name, *style)
+
+        self.ui.show_all_button.clicked.connect(self.show_all_button_clicked)
+        self.ui.hide_all_button.clicked.connect(self.hide_all_button_clicked)
+        self.ui.delete_all_button.clicked.connect(self.delete_all_button_clicked)
 
         self.ui.ok_button.clicked.connect(self.ok_button_clicked)
         self.ui.cancel_button.clicked.connect(self.reject)
@@ -150,7 +155,30 @@ class GraphsEditDialog(QtWidgets.QDialog):
         plot.setPen(current_pen)
 
     def delete_graph_button_clicked(self):
-        pass
+        delete_button = self.sender()
+        deleted_row = self.__get_row_by_sender_widget(delete_button, GraphsEditDialog.Column.DELETE)
+        graph_name = self.__get_name_by_row(deleted_row)
+
+        self.ui.graphs_table.removeRow(deleted_row)
+        self.remove_graph.emit(graph_name)
+
+    def show_all_button_clicked(self):
+        for row in range(self.ui.graphs_table.rowCount()):
+            widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.SHOW)
+            show_checkbox = qt_utils.unwrap_from_layout(widget)
+            show_checkbox.setChecked(True)
+
+    def hide_all_button_clicked(self):
+        for row in range(self.ui.graphs_table.rowCount()):
+            widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.SHOW)
+            show_checkbox = qt_utils.unwrap_from_layout(widget)
+            show_checkbox.setChecked(False)
+
+    def delete_all_button_clicked(self):
+        for row in reversed(range(self.ui.graphs_table.rowCount())):
+            widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.DELETE)
+            delete_button = qt_utils.unwrap_from_layout(widget)
+            delete_button.click()
 
     def ok_button_clicked(self):
         pass
