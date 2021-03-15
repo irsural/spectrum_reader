@@ -419,7 +419,7 @@ class MeasureConductor(QtCore.QObject):
                     self.started = True
                 else:
                     logging.error("Не удалось установить соединение, необходимо вручную сбросить "
-                                  "Remote Interface на спектроанализаторе")
+                                  "Remote Interface на спектроанализаторе (System -> Remote setup... -> Off -> On)")
         return self.started
 
     def exec_cmd(self, a_cmd: str):

@@ -62,10 +62,6 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.ui.delete_all_button.clicked.connect(self.delete_all_button_clicked)
         self.ui.graphs_table.itemChanged.connect(self.measure_renamed)
 
-        self.ui.ok_button.clicked.connect(self.ok_button_clicked)
-        self.ui.cancel_button.clicked.connect(self.reject)
-        self.ui.apply_button.clicked.connect(self.apply_button_clicked)
-
         self.show()
 
     @staticmethod

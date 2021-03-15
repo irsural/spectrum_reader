@@ -231,6 +231,7 @@ class GraphsControl(QtCore.QObject):
 
             # В LogMode=True сохраняются левые значения
             self.graph_widget.plotItem.setLogMode(x=False, y=False)
+            self.reset_graph_points_count()
 
             csv_exporter = exporters.CSVExporter(self.graph_widget.plotItem)
             try:
@@ -238,6 +239,7 @@ class GraphsControl(QtCore.QObject):
             except ValueError:
                 logging.error("Не удалось сохранить csv-файл")
 
+            self.set_points_count(self.settings.graph_points_count)
             self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
     def import_from_csv(self, a_filename):
