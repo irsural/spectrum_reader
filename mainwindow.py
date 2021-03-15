@@ -1,19 +1,17 @@
 from logging.handlers import RotatingFileHandler
 import logging
-import time
-import os
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
-from irspy.settings_ini_parser import BadIniException
 from irspy.utils import exception_decorator, exception_decorator_print
+from irspy.settings_ini_parser import BadIniException
 from irspy.qt import qt_utils
 
+from tektronix_send_cmd_dialog import TektronixSendCmdDialog
 from ui.py.mainwindow import Ui_MainWindow as MainForm
 from MeasureConductor import MeasureConductor
-from tekvisa_qcompleter import CmdCompleter
 from MeasureManager import MeasureManager
 from graphs_control import GraphsControl
 from about_dialog import AboutDialog
@@ -60,7 +58,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.cmd_tree = tek.get_commands_three(tek.CmdCase.UPPER)
             self.add_extra_commands(self.cmd_tree)
-            self.set_completer(self.cmd_tree)
 
             self.measure_conductor = MeasureConductor(self.settings, self.graphs_control, self.cmd_tree)
             self.measure_conductor.tektronix_is_ready.connect(self.tektronix_is_ready)
@@ -85,14 +82,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.sa_ip_edit.textChanged.connect(self.sa_ip_changed)
         self.ui.gnrw_ip_edit.textChanged.connect(self.gnrw_ip_changed)
 
-        self.ui.send_cmd_button.clicked.connect(self.send_button_clicked)
-        self.ui.idn_button.clicked.connect(self.idn_button_clicked)
-        self.ui.error_buttons.clicked.connect(self.errors_button_clicked)
         self.ui.sa_connect_button.clicked.connect(self.sa_connect_button_clicked)
         self.ui.gnrw_connect_button.clicked.connect(self.gnrw_connect_button_clicked)
-        self.ui.read_specter_button.clicked.connect(self.read_specter_button_clicked)
 
-        self.ui.cmd_edit.textChanged.connect(self.cmd_edit_text_changed)
+        self.ui.open_tektronix_send_cmd_dialog_button.clicked.connect(
+            self.open_tektronix_send_cmd_dialog_button_clicked)
 
         self.ui.change_path_button.clicked.connect(self.change_path_button_clicked)
         self.ui.save_file_name_edit.textChanged.connect(self.save_file_name_changed)
@@ -115,12 +109,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.graphs_control.graph_points_count_changed.connect(self.update_graph_points_count)
 
-    def set_completer(self, a_cmd_tree: dict):
-        cmd_completer = CmdCompleter(a_cmd_tree, self)
-        cmd_completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        cmd_completer.setModelSorting(QtWidgets.QCompleter.CaseSensitivelySortedModel)
-        self.ui.cmd_edit.setCompleter(cmd_completer)
-
     def set_up_logger(self):
         log = qt_utils.QTextEditLogger(self.ui.log_text_edit)
         log.setFormatter(logging.Formatter('%(asctime)s - %(message)s', datefmt='%H:%M:%S'))
@@ -136,10 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def lock_interface(self, a_lock: bool):
         self.ui.sa_connect_button.setDisabled(a_lock)
         self.ui.gnrw_connect_button.setDisabled(a_lock)
-        self.ui.send_cmd_button.setDisabled(a_lock)
-        self.ui.idn_button.setDisabled(a_lock)
-        self.ui.error_buttons.setDisabled(a_lock)
-        self.ui.read_specter_button.setDisabled(a_lock)
+        self.ui.open_tektronix_send_cmd_dialog_button.setDisabled(a_lock)
 
         self.ui.change_path_button.setDisabled(a_lock)
         self.ui.add_measure_button.setDisabled(a_lock)
@@ -171,6 +156,11 @@ class MainWindow(QtWidgets.QMainWindow):
         a_cmd_tree[MeasureConductor.SPEC_CMD_READ_DELAY] = {"desc": "Wait N seconds before reading the answer"}
         a_cmd_tree[MeasureConductor.GNRW_COMMANDS_NODE_NAME] = MeasureConductor.GNRW_COMMANDS_TREE
 
+    def open_tektronix_send_cmd_dialog_button_clicked(self):
+        tektronix_send_cmd_dialog = TektronixSendCmdDialog(self.cmd_tree, self.settings)
+        tektronix_send_cmd_dialog.send_cmd.connect(self.tektronix_send_cmd)
+        tektronix_send_cmd_dialog.exec()
+
     def sa_ip_changed(self, a_text):
         self.settings.sa_ip = a_text
 
@@ -197,37 +187,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.gnrw_status_label.setPixmap(pixmap.scaled(20, 20, QtCore.Qt.KeepAspectRatio))
 
-    def send_button_clicked(self):
-        if self.measure_conductor.exec_cmd(self.ui.cmd_edit.text()):
+    def tektronix_send_cmd(self, a_cmd):
+        if self.measure_conductor.exec_cmd(a_cmd):
             self.lock_interface(True)
 
-    def idn_button_clicked(self):
-        if self.measure_conductor.exec_cmd("*IDN?"):
-            self.lock_interface(True)
-
-    def errors_button_clicked(self):
-        if self.measure_conductor.exec_cmd(":SYST:ERR:ALL?"):
-            self.lock_interface(True)
-
-    def read_specter_button_clicked(self):
-        if self.measure_conductor.exec_cmd(":READ:SPEC?"):
-            self.lock_interface(True)
-
-    def tip_full_cmd_checkbox_toggled(self, a_enable):
-        self.settings.tip_full_cmd = int(a_enable)
-
-        cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
-        self.cmd_tree = tek.get_commands_three(cmd_case)
-        self.add_extra_commands(self.cmd_tree)
-        self.set_completer(self.cmd_tree)
-        self.measure_manager.update_cmd_tree(self.cmd_tree)
-
-    def cmd_edit_text_changed(self, a_cmd: str):
-        self.ui.cmd_description_text_edit.clear()
-        cmd_description = tek.get_cmd_description(a_cmd.split(" ")[0], self.cmd_tree)
-        if cmd_description:
-            self.ui.cmd_description_text_edit.appendPlainText(cmd_description)
-            self.ui.cmd_description_text_edit.verticalScrollBar().setValue(0)
+    # def tip_full_cmd_checkbox_toggled(self, a_enable):
+    #     self.settings.tip_full_cmd = int(a_enable)
+    #
+    #     cmd_case = tek.CmdCase.LOWER if self.settings.tip_full_cmd else tek.CmdCase.UPPER
+    #     self.cmd_tree = tek.get_commands_three(cmd_case)
+    #     self.add_extra_commands(self.cmd_tree)
+    #     self.set_completer(self.cmd_tree)
+    #     self.measure_manager.update_cmd_tree(self.cmd_tree)
 
     def change_path_button_clicked(self):
         save_folder_path = QtWidgets.QFileDialog.getExistingDirectory(

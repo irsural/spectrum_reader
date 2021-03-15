@@ -3,7 +3,6 @@ import logging
 import bisect
 import math
 import csv
-import os
 
 from pyqtgraph import mkPen, exporters, PlotDataItem
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -55,8 +54,6 @@ class GraphsControl(QtCore.QObject):
         self.points_count = 0
 
         self.lock = False
-
-        # self.set_axis_points()
 
     def clear(self):
         self.graph_widget.plotItem.clear()
