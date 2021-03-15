@@ -2,7 +2,6 @@ from typing import List, Tuple, Dict
 from enum import IntEnum
 import logging
 
-from pyqtgraph import PlotWidget, PlotDataItem
 from PyQt5 import QtGui, QtWidgets, QtCore
 
 from irspy.qt.custom_widgets.QTableDelegates import TransparentPainterForWidget
@@ -32,10 +31,12 @@ class GraphsEditDialog(QtWidgets.QDialog):
     BOLD_PEN_WIDTH = 4
 
     enable_graph = QtCore.pyqtSignal(str, bool)
+    change_graph_color = QtCore.pyqtSignal(str, QtGui.QColor)
+    bold_graph_enable = QtCore.pyqtSignal(str, bool)
     remove_graph = QtCore.pyqtSignal(str)
     rename_graph = QtCore.pyqtSignal(str, str)
 
-    def __init__(self, a_graph_widget: PlotWidget, a_graph_styles: Dict[str, Tuple[str, bool, bool]], a_lock_changes,
+    def __init__(self, a_graph_styles: Dict[str, Tuple[str, bool, bool]], a_lock_changes,
                  a_settings: QtSettings, a_parent=None):
         super().__init__(a_parent)
 
@@ -49,7 +50,6 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.ui.graphs_table.setItemDelegate(TransparentPainterForWidget(self.ui.graphs_table, "#d4d4ff"))
         self.ui.graphs_table.cellDoubleClicked.connect(self.cell_double_clicked)
 
-        self.graph_widget = a_graph_widget
         self.graph_styles = a_graph_styles
 
         for name, style in self.graph_styles.items():
@@ -104,17 +104,6 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.ui.graphs_table.setCellWidget(row_idx, GraphsEditDialog.Column.DELETE, qt_utils.wrap_in_layout(button))
         button.clicked.connect(self.delete_graph_button_clicked)
 
-    def __get_plot_by_name(self, a_graph_name) -> PlotDataItem:
-        for plot in self.graph_widget.plotItem.listDataItems():
-            if plot.name() == a_graph_name:
-                return plot
-        else:
-            assert False, f"Не удалось найти график с именем {a_graph_name}"
-
-    def __get_row_by_name(self, a_name):
-        for row in range(self.ui.graphs_table.rowCount()):
-            pass
-
     def __get_name_by_row(self, a_row):
         return self.ui.graphs_table.item(a_row, GraphsEditDialog.Column.NAME).text()
 
@@ -127,10 +116,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
             if new_color.isValid():
                 self.ui.graphs_table.item(a_row, GraphsEditDialog.Column.COLOR).setBackground(new_color)
 
-                plot = self.__get_plot_by_name(name)
-                current_pen: QtGui.QPen = plot.opts['pen']
-                current_pen.setColor(new_color)
-                plot.setPen(current_pen)
+                self.change_graph_color.emit(name, new_color)
 
         elif a_column == GraphsEditDialog.Column.NAME:
             self.measure_name_before_rename = name
@@ -147,12 +133,12 @@ class GraphsEditDialog(QtWidgets.QDialog):
                     del self.graph_styles[self.measure_name_before_rename]
                     self.graph_styles[new_name] = styles
 
+                    self.rename_graph.emit(self.measure_name_before_rename, new_name)
+
                     if a_item.text() != new_name:
                         # Если заданное имя уже существует и new_name подправлено в get_allowable_name
                         self.measure_name_before_rename = ""
                         a_item.setText(new_name)
-
-                    self.rename_graph.emit(self.measure_name_before_rename, new_name)
                 else:
                     old_name = self.measure_name_before_rename
                     self.measure_name_before_rename = ""
@@ -183,14 +169,9 @@ class GraphsEditDialog(QtWidgets.QDialog):
     def bold_graph_checkbox_toggled(self, a_state):
         sender_checkbox = self.sender()
         graph_row = self.__get_row_by_sender_widget(sender_checkbox, GraphsEditDialog.Column.BOLD)
-
         name = self.__get_name_by_row(graph_row)
-        plot = self.__get_plot_by_name(name)
 
-        current_pen: QtGui.QPen = plot.opts['pen']
-        new_width = GraphsEditDialog.BOLD_PEN_WIDTH if a_state else GraphsEditDialog.DEFAULT_PEN_WIDTH
-        current_pen.setWidth(new_width)
-        plot.setPen(current_pen)
+        self.bold_graph_enable.emit(name, a_state)
 
     def delete_graph_button_clicked(self):
         delete_button = self.sender()

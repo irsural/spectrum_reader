@@ -341,7 +341,7 @@ class MeasureConductor(QtCore.QObject):
 
             pokrov_state = "NO CONN."
             if self.pokrov.is_connected():
-                if True:  # Заменить на is_signal_on
+                if self.pokrov.is_signal_on():
                     pokrov_state = f"УрП={self.pokrov.line_power} УрС={self.pokrov.ether_power}"
                 else:
                     pokrov_state = "OFF"
@@ -381,15 +381,15 @@ class MeasureConductor(QtCore.QObject):
     def verify_configs(a_configs: List[Tuple[str, MeasureConfig]]):
         success_verified = True
 
-        read_op_count = []
-        for _, config in a_configs:
-            cmd_read_op_count = config.cmd_list().count(":READ:SPEC?")
-            if cmd_read_op_count != 0:
-                read_op_count.append(cmd_read_op_count)
-
-        if not all([read_op_count[0] == count for count in read_op_count]):
-            logging.error("Количество операций чтения в каждой конфигурации должно быть одинаковым, либо равным нулю")
-            success_verified = False
+        # read_op_count = []
+        # for _, config in a_configs:
+        #     cmd_read_op_count = config.cmd_list().count(":READ:SPEC?")
+        #     if cmd_read_op_count != 0:
+        #         read_op_count.append(cmd_read_op_count)
+        #
+        # if not all([read_op_count[0] == count for count in read_op_count]):
+        #     logging.error("Количество операций чтения в каждой конфигурации должно быть одинаковым, либо равным нулю")
+        #     success_verified = False
 
         return success_verified
 

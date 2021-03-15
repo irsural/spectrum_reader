@@ -56,6 +56,8 @@ class GraphsControl(QtCore.QObject):
 
         self.lock = False
 
+        # self.set_axis_points()
+
     def clear(self):
         self.graph_widget.plotItem.clear()
         self.graphs_data.clear()
@@ -65,34 +67,14 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.plotItem.setLogMode(x=a_enable, y=False)
 
     def open_graphs_edit_dialog(self):
-        graphs_edit_dialog = GraphsEditDialog(self.graph_widget, self.graphs_styles, self.lock, self.settings)
+        graphs_edit_dialog = GraphsEditDialog(self.graphs_styles, self.lock, self.settings)
         graphs_edit_dialog.enable_graph.connect(self.enable_graph)
+        graphs_edit_dialog.change_graph_color.connect(self.change_graph_color)
+        graphs_edit_dialog.bold_graph_enable.connect(self.bold_graph_enable)
         graphs_edit_dialog.remove_graph.connect(self.remove_graph)
         graphs_edit_dialog.rename_graph.connect(self.rename_graph)
         graphs_edit_dialog.exec()
         graphs_edit_dialog.close()
-
-    def remove_graph(self, a_graph_name):
-        plot = self.__get_plot_with_name(a_graph_name)
-        self.graph_widget.removeItem(plot)
-        del self.graphs_styles[a_graph_name]
-        del self.graphs_data[a_graph_name]
-
-    def rename_graph(self, a_old_name, a_new_name):
-        data = self.graphs_data[a_old_name]
-        del self.graphs_data[a_old_name]
-        self.graphs_data[a_new_name] = data
-
-        plot = self.__get_plot_with_name(a_old_name)
-        plot.setData(*data, name=a_new_name)
-        self.graph_widget.plotItem.legend.removeItem(plot)
-        self.graph_widget.plotItem.legend.addItem(plot, a_new_name)
-
-    def get_graphs_names(self) -> List:
-        return list(self.graphs_data.keys())
-
-    def lock_changes(self, a_lock):
-        self.lock = a_lock
 
     def enable_graph(self, a_graph_name, a_enable):
         if a_enable:
@@ -103,8 +85,45 @@ class GraphsControl(QtCore.QObject):
             self.graph_widget.plot(x=x_data, y=y_data, pen=pen, name=a_graph_name)
             self.__set_graph_points_count(a_graph_name, self.settings.graph_points_count)
         else:
-            plot = self.__get_plot_with_name(a_graph_name)
+            plot = self.__get_plot_by_name(a_graph_name)
             self.graph_widget.removeItem(plot)
+
+    def change_graph_color(self, a_graph_name, a_color: QtGui.QColor):
+        plot = self.__get_plot_by_name(a_graph_name)
+
+        current_pen: QtGui.QPen = plot.opts['pen']
+        current_pen.setColor(a_color)
+        plot.setPen(current_pen)
+
+    def bold_graph_enable(self, a_graph_name, a_enable):
+        plot = self.__get_plot_by_name(a_graph_name)
+
+        current_pen: QtGui.QPen = plot.opts['pen']
+        new_width = GraphsEditDialog.BOLD_PEN_WIDTH if a_enable else GraphsEditDialog.DEFAULT_PEN_WIDTH
+        current_pen.setWidth(new_width)
+        plot.setPen(current_pen)
+
+    def remove_graph(self, a_graph_name):
+        plot = self.__get_plot_by_name(a_graph_name)
+        self.graph_widget.removeItem(plot)
+        del self.graphs_styles[a_graph_name]
+        del self.graphs_data[a_graph_name]
+
+    def rename_graph(self, a_old_name, a_new_name):
+        data = self.graphs_data[a_old_name]
+        del self.graphs_data[a_old_name]
+        self.graphs_data[a_new_name] = data
+
+        plot = self.__get_plot_by_name(a_old_name)
+        plot.setData(*data, name=a_new_name)
+        self.graph_widget.plotItem.legend.removeItem(plot)
+        self.graph_widget.plotItem.legend.addItem(plot, a_new_name)
+
+    def get_graphs_names(self) -> List:
+        return list(self.graphs_data.keys())
+
+    def lock_changes(self, a_lock):
+        self.lock = a_lock
 
     def draw_new(self, graph_name, a_x_data, a_y_data):
         assert graph_name not in self.graphs_data, "Нельзя добавлять существующие графики через draw_new()"
@@ -132,11 +151,21 @@ class GraphsControl(QtCore.QObject):
         graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
         self.graph_points_count_changed.emit(graph_points_count)
 
-        # ax = pw.getAxis('bottom')
-        # dx = [(value, str(value))]
-        # ax.setTicks([dx, []])
+    def set_axis_points(self):
+        x_min = 9e999
+        x_max = 0
+        for xs, _ in self.graphs_data.values():
+            x_min = x_min if x_min < xs[0] else xs[0]
+            x_max = x_max if x_max > xs[-1] else xs[-1]
 
-    def __get_plot_with_name(self, a_graph_name) -> PlotDataItem:
+        ticks = []
+        x = x_min
+        dx = (x_max - x_min) / 10
+        while x <= x_max:
+            ticks.append(x)
+            x += dx
+
+    def __get_plot_by_name(self, a_graph_name) -> PlotDataItem:
         for plot in self.graph_widget.plotItem.listDataItems():
             if plot.name() == a_graph_name:
                 return plot
@@ -160,7 +189,7 @@ class GraphsControl(QtCore.QObject):
             new_x_data = [x_data[i] for i in new_data_indices]
             new_y_data = [y_data[i] for i in new_data_indices]
 
-            plot = self.__get_plot_with_name(a_graph_name)
+            plot = self.__get_plot_by_name(a_graph_name)
             plot.setData(x=new_x_data, y=new_y_data)
 
             return a_count
