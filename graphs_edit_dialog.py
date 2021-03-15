@@ -194,10 +194,14 @@ class GraphsEditDialog(QtWidgets.QDialog):
             show_checkbox.setChecked(False)
 
     def delete_all_button_clicked(self):
-        for row in reversed(range(self.ui.graphs_table.rowCount())):
-            widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.DELETE)
-            delete_button = qt_utils.unwrap_from_layout(widget)
-            delete_button.click()
+        res = QtWidgets.QMessageBox.question(self, "Подтвердите действие", "Вы действительно хотите удалить все графики?",
+                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                             QtWidgets.QMessageBox.Yes)
+        if res == QtWidgets.QMessageBox.Yes:
+            for row in reversed(range(self.ui.graphs_table.rowCount())):
+                widget = self.ui.graphs_table.cellWidget(row, GraphsEditDialog.Column.DELETE)
+                delete_button = qt_utils.unwrap_from_layout(widget)
+                delete_button.click()
 
     def ok_button_clicked(self):
         self.apply_button_clicked()

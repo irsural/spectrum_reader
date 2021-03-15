@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.settings.restore_qwidget_state(self)
             self.settings.restore_qwidget_state(self.ui.mw_splitter_1)
             self.settings.restore_qwidget_state(self.ui.mw_splitter_2)
+            self.settings.restore_qwidget_state(self.ui.mw_splitter_3)
             self.settings.restore_qwidget_state(self.ui.measures_table)
 
             self.set_up_logger()
@@ -301,7 +302,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.graphs_control.open_graphs_edit_dialog()
 
     def clear_graph_button_clicked(self):
-        self.graphs_control.clear()
+        res = QtWidgets.QMessageBox.question(self, "Подтвердите действие", "Вы действительно хотите сбросить график?",
+                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                             QtWidgets.QMessageBox.Yes)
+        if res == QtWidgets.QMessageBox.Yes:
+            self.graphs_control.clear()
 
     def graph_points_count_changed(self):
         self.graphs_control.set_points_count(self.ui.points_count_spinbox.value())
@@ -319,6 +324,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, a_event: QtGui.QCloseEvent):
         self.settings.save_qwidget_state(self.ui.measures_table)
+        self.settings.save_qwidget_state(self.ui.mw_splitter_3)
         self.settings.save_qwidget_state(self.ui.mw_splitter_2)
         self.settings.save_qwidget_state(self.ui.mw_splitter_1)
         self.settings.save_qwidget_state(self)
