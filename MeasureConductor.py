@@ -342,7 +342,7 @@ class MeasureConductor(QtCore.QObject):
             pokrov_state = "NO CONN."
             if self.pokrov.is_connected():
                 if self.pokrov.is_signal_on():
-                    pokrov_state = f"УрП={self.pokrov.line_power} УрС={self.pokrov.ether_power}"
+                    pokrov_state = f"УрП={self.pokrov.ether_power} УрС={self.pokrov.line_power}"
                 else:
                     pokrov_state = "OFF"
 
