@@ -50,7 +50,7 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.addLegend()
 
         self.graphs_data: Dict[str, Tuple[List, List]] = {}
-        self.graphs_styles: Dict[str, Tuple[str, bool, bool]] = {}
+        self.graphs_styles: Dict[str, List] = {}
         self.points_count = 0
 
         self.lock = False
@@ -85,12 +85,16 @@ class GraphsControl(QtCore.QObject):
             plot = self.__get_plot_by_name(a_graph_name)
             self.graph_widget.removeItem(plot)
 
+        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.SHOW] = a_enable
+
     def change_graph_color(self, a_graph_name, a_color: QtGui.QColor):
         plot = self.__get_plot_by_name(a_graph_name)
 
         current_pen: QtGui.QPen = plot.opts['pen']
         current_pen.setColor(a_color)
         plot.setPen(current_pen)
+
+        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.COLOR] = a_color
 
     def bold_graph_enable(self, a_graph_name, a_enable):
         plot = self.__get_plot_by_name(a_graph_name)
@@ -99,6 +103,8 @@ class GraphsControl(QtCore.QObject):
         new_width = GraphsEditDialog.BOLD_PEN_WIDTH if a_enable else GraphsEditDialog.DEFAULT_PEN_WIDTH
         current_pen.setWidth(new_width)
         plot.setPen(current_pen)
+
+        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.BOLD] = a_enable
 
     def remove_graph(self, a_graph_name):
         plot = self.__get_plot_by_name(a_graph_name)
@@ -116,13 +122,15 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.plotItem.legend.removeItem(plot)
         self.graph_widget.plotItem.legend.addItem(plot, a_new_name)
 
+        self.__set_graph_points_count(a_new_name, self.settings.graph_points_count)
+
     def get_graphs_names(self) -> List:
         return list(self.graphs_data.keys())
 
     def lock_changes(self, a_lock):
         self.lock = a_lock
 
-    def draw_new(self, graph_name, a_x_data, a_y_data):
+    def draw_new(self, graph_name, a_x_data, a_y_data, a_graphs_styles=None):
         assert graph_name not in self.graphs_data, "Нельзя добавлять существующие графики через draw_new()"
 
         graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
@@ -130,7 +138,7 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
 
         self.graphs_data[graph_name] = (a_x_data, a_y_data)
-        self.graphs_styles[graph_name] = (graph_color, False, True)
+        self.graphs_styles[graph_name] = a_graphs_styles if a_graphs_styles is not None else [graph_color, False, True]
 
         graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
         self.graph_points_count_changed.emit(graph_points_count)

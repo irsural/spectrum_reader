@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Dict
 from enum import IntEnum
 import logging
 
@@ -36,7 +36,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
     remove_graph = QtCore.pyqtSignal(str)
     rename_graph = QtCore.pyqtSignal(str, str)
 
-    def __init__(self, a_graph_styles: Dict[str, Tuple[str, bool, bool]], a_lock_changes,
+    def __init__(self, a_graph_styles: Dict[str, List], a_lock_changes,
                  a_settings: QtSettings, a_parent=None):
         super().__init__(a_parent)
 
@@ -200,11 +200,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
                 delete_button.click()
 
     def ok_button_clicked(self):
-        self.apply_button_clicked()
         self.accept()
-
-    def apply_button_clicked(self):
-        pass
 
     def __del__(self):
         self.settings.save_qwidget_state(self.ui.graphs_table)
