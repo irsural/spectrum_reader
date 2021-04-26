@@ -1,8 +1,10 @@
 from typing import List, Dict, Tuple
+import tempfile
 import logging
 import bisect
 import math
 import csv
+import os
 
 from pyqtgraph import mkPen, exporters, PlotDataItem
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -50,7 +52,7 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.addLegend()
 
         self.graphs_data: Dict[str, Tuple[List, List]] = {}
-        self.graphs_styles: Dict[str, List] = {}
+        self.graphs_properties: Dict[str, List] = {}
         self.points_count = 0
 
         self.lock = False
@@ -58,13 +60,13 @@ class GraphsControl(QtCore.QObject):
     def clear(self):
         self.graph_widget.plotItem.clear()
         self.graphs_data.clear()
-        self.graphs_styles.clear()
+        self.graphs_properties.clear()
 
     def log_scale_enable(self, a_enable):
         self.graph_widget.plotItem.setLogMode(x=a_enable, y=False)
 
     def open_graphs_edit_dialog(self):
-        graphs_edit_dialog = GraphsEditDialog(self.graphs_styles, self.lock, self.settings)
+        graphs_edit_dialog = GraphsEditDialog(self.graphs_properties, self.lock, self.settings)
         graphs_edit_dialog.enable_graph.connect(self.enable_graph)
         graphs_edit_dialog.change_graph_color.connect(self.change_graph_color)
         graphs_edit_dialog.bold_graph_enable.connect(self.bold_graph_enable)
@@ -75,7 +77,7 @@ class GraphsControl(QtCore.QObject):
 
     def enable_graph(self, a_graph_name, a_enable):
         if a_enable:
-            color = self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.COLOR]
+            color = self.graphs_properties[a_graph_name][GraphsEditDialog.PropertiesItem.COLOR]
             pen = mkPen(color=color, width=GraphsEditDialog.DEFAULT_PEN_WIDTH)
 
             x_data, y_data = self.graphs_data[a_graph_name]
@@ -85,7 +87,7 @@ class GraphsControl(QtCore.QObject):
             plot = self.__get_plot_by_name(a_graph_name)
             self.graph_widget.removeItem(plot)
 
-        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.SHOW] = a_enable
+        self.graphs_properties[a_graph_name][GraphsEditDialog.PropertiesItem.SHOW] = a_enable
 
     def change_graph_color(self, a_graph_name, a_color: QtGui.QColor):
         plot = self.__get_plot_by_name(a_graph_name)
@@ -94,7 +96,7 @@ class GraphsControl(QtCore.QObject):
         current_pen.setColor(a_color)
         plot.setPen(current_pen)
 
-        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.COLOR] = a_color
+        self.graphs_properties[a_graph_name][GraphsEditDialog.PropertiesItem.COLOR] = a_color
 
     def bold_graph_enable(self, a_graph_name, a_enable):
         plot = self.__get_plot_by_name(a_graph_name)
@@ -104,12 +106,12 @@ class GraphsControl(QtCore.QObject):
         current_pen.setWidth(new_width)
         plot.setPen(current_pen)
 
-        self.graphs_styles[a_graph_name][GraphsEditDialog.StylesItem.BOLD] = a_enable
+        self.graphs_properties[a_graph_name][GraphsEditDialog.PropertiesItem.BOLD] = a_enable
 
     def remove_graph(self, a_graph_name):
         plot = self.__get_plot_by_name(a_graph_name)
         self.graph_widget.removeItem(plot)
-        del self.graphs_styles[a_graph_name]
+        del self.graphs_properties[a_graph_name]
         del self.graphs_data[a_graph_name]
 
     def rename_graph(self, a_old_name, a_new_name):
@@ -124,13 +126,47 @@ class GraphsControl(QtCore.QObject):
 
         self.__set_graph_points_count(a_new_name, self.settings.graph_points_count)
 
+        self.__rename_in_csv(a_old_name, a_new_name)
+
+    def __rename_in_csv(self, a_old_name, a_new_name):
+        with open(self.graphs_properties[a_new_name][GraphsEditDialog.PropertiesItem.PATH], 'r') as graph_csv:
+            success_copy = True
+            csv_header: List[str] = next(csv.reader(graph_csv))
+            if f"{a_old_name}_x" in csv_header and f"{a_old_name}_y" in csv_header:
+                csv_filepath = self.graphs_properties[a_new_name][GraphsEditDialog.PropertiesItem.PATH]
+                csv_folder, csv_name = os.path.split(csv_filepath)
+                csv_header = [s.replace(a_old_name, a_new_name) for s in csv_header]
+
+                tmp_fd, tmp_path = tempfile.mkstemp(dir=csv_folder, prefix=f"tmp_{a_new_name}")
+
+                with os.fdopen(tmp_fd, 'w') as tmp_csv:
+                    tmp_csv.write(",".join(map(lambda s: f'"{s}"', csv_header)))
+                    tmp_csv.write('\n')
+                    for line in graph_csv:
+                        tmp_csv.write(line)
+            else:
+                success_copy = False
+                logging.error(f"Имя графика {a_old_name} не найдено в исходном csv-файле. "
+                              f"Переименование не будет сохранено в csv-файл")
+
+        if success_copy:
+            os.remove(csv_filepath)
+            os.rename(tmp_path, csv_filepath)
+        else:
+            logging.error(f"Не удалось переименовать график {a_new_name} в csv-файле")
+            if os.path.isfile(csv_filepath):
+                os.remove(tmp_path)
+            else:
+                logging.error(f"Во время переименования возникла ошибка. Копия csv-файла сохранена в файле"
+                              f"{tmp_csv.name}")
+
     def get_graphs_names(self) -> List:
         return list(self.graphs_data.keys())
 
     def lock_changes(self, a_lock):
         self.lock = a_lock
 
-    def draw_new(self, graph_name, a_x_data, a_y_data, a_graphs_styles=None):
+    def draw_new(self, graph_name, a_x_data, a_y_data, a_graphs_properties=None, a_graph_filepath=""):
         assert graph_name not in self.graphs_data, "Нельзя добавлять существующие графики через draw_new()"
 
         graph_color = GraphsControl.COLORS[len(self.graphs_data) % len(GraphsControl.COLORS)]
@@ -138,7 +174,9 @@ class GraphsControl(QtCore.QObject):
         self.graph_widget.plot(x=a_x_data, y=a_y_data, pen=pen, name=graph_name)
 
         self.graphs_data[graph_name] = (a_x_data, a_y_data)
-        self.graphs_styles[graph_name] = a_graphs_styles if a_graphs_styles is not None else [graph_color, False, True]
+        self.graphs_properties[graph_name] = a_graphs_properties if a_graphs_properties is not None \
+            else [graph_color, False, True, ""]
+        self.graphs_properties[graph_name][GraphsEditDialog.PropertiesItem.PATH] = a_graph_filepath
 
         graph_points_count = self.__set_graph_points_count(graph_name, self.settings.graph_points_count)
         self.graph_points_count_changed.emit(graph_points_count)
@@ -250,6 +288,9 @@ class GraphsControl(QtCore.QObject):
             self.set_points_count(self.settings.graph_points_count)
             self.graph_widget.plotItem.setLogMode(x=self.settings.log_scale_enabled, y=False)
 
+            for gp in self.graphs_properties.values():
+                gp[GraphsEditDialog.PropertiesItem.PATH] = a_filename
+
     def import_from_csv(self, a_filename):
         with open(a_filename, 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
@@ -269,4 +310,4 @@ class GraphsControl(QtCore.QObject):
 
         for graph_name, xs, ys in zip(names, x_data, y_data):
             graph_name = utils.get_allowable_name(self.graphs_data.keys(), graph_name, "{new_name} ({number})")
-            self.draw_new(f"{graph_name}", xs, ys)
+            self.draw_new(f"{graph_name}", xs, ys, a_graph_filepath=a_filename)

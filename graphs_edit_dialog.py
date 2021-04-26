@@ -20,12 +20,14 @@ class GraphsEditDialog(QtWidgets.QDialog):
         BOLD = 2,
         SHOW = 3,
         DELETE = 4,
-        COUNT = 5
+        PATH = 5,
+        COUNT = 6
 
-    class StylesItem(IntEnum):
+    class PropertiesItem(IntEnum):
         COLOR = 0,
         BOLD = 1,
-        SHOW = 2
+        SHOW = 2,
+        PATH = 3
 
     DEFAULT_PEN_WIDTH = 2
     BOLD_PEN_WIDTH = 4
@@ -36,7 +38,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
     remove_graph = QtCore.pyqtSignal(str)
     rename_graph = QtCore.pyqtSignal(str, str)
 
-    def __init__(self, a_graph_styles: Dict[str, List], a_lock_changes,
+    def __init__(self, a_graph_properties: Dict[str, List], a_lock_changes,
                  a_settings: QtSettings, a_parent=None):
         super().__init__(a_parent)
 
@@ -50,9 +52,9 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.ui.graphs_table.setItemDelegate(TransparentPainterForWidget(self.ui.graphs_table, "#d4d4ff"))
         self.ui.graphs_table.cellDoubleClicked.connect(self.cell_double_clicked)
 
-        self.graph_styles = a_graph_styles
+        self.graph_properties = a_graph_properties
 
-        for name, style in self.graph_styles.items():
+        for name, style in self.graph_properties.items():
             self.add_graph_to_table(name, *style, a_lock_changes)
 
         self.measure_name_before_rename = ""
@@ -70,7 +72,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         a_table_widget.setItem(a_row, a_column, item)
 
-    def add_graph_to_table(self, a_name, a_color, a_bold, a_show, a_lock_changes):
+    def add_graph_to_table(self, a_name, a_color, a_bold, a_show, a_graph_filepath, a_lock_changes):
         row_idx = self.ui.graphs_table.rowCount()
         self.ui.graphs_table.insertRow(row_idx)
 
@@ -83,6 +85,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.BOLD)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.SHOW)
         self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.DELETE)
+        self.__add_non_editable_item(self.ui.graphs_table, row_idx, GraphsEditDialog.Column.PATH)
 
         self.ui.graphs_table.item(row_idx, GraphsEditDialog.Column.COLOR).setBackground(QtGui.QColor(a_color))
 
@@ -100,6 +103,8 @@ class GraphsEditDialog(QtWidgets.QDialog):
         self.ui.graphs_table.setCellWidget(row_idx, GraphsEditDialog.Column.DELETE, qt_utils.wrap_in_layout(button))
         button.clicked.connect(self.delete_graph_button_clicked)
 
+        self.ui.graphs_table.item(row_idx, GraphsEditDialog.Column.PATH).setText(a_graph_filepath)
+
     def __get_name_by_row(self, a_row):
         return self.ui.graphs_table.item(a_row, GraphsEditDialog.Column.NAME).text()
 
@@ -107,7 +112,7 @@ class GraphsEditDialog(QtWidgets.QDialog):
         name = self.__get_name_by_row(a_row)
 
         if a_column == GraphsEditDialog.Column.COLOR:
-            color = self.graph_styles[name][GraphsEditDialog.StylesItem.COLOR]
+            color = self.graph_properties[name][GraphsEditDialog.PropertiesItem.COLOR]
             new_color = QtWidgets.QColorDialog.getColor(QtGui.QColor(color))
             if new_color.isValid():
                 self.ui.graphs_table.item(a_row, GraphsEditDialog.Column.COLOR).setBackground(new_color)
@@ -123,11 +128,11 @@ class GraphsEditDialog(QtWidgets.QDialog):
             if self.measure_name_before_rename:
                 new_name = a_item.text()
                 if new_name:
-                    new_name = utils.get_allowable_name(self.graph_styles.keys(), new_name)
+                    new_name = utils.get_allowable_name(self.graph_properties.keys(), new_name)
 
-                    styles = self.graph_styles[self.measure_name_before_rename]
-                    del self.graph_styles[self.measure_name_before_rename]
-                    self.graph_styles[new_name] = styles
+                    properties = self.graph_properties[self.measure_name_before_rename]
+                    del self.graph_properties[self.measure_name_before_rename]
+                    self.graph_properties[new_name] = properties
 
                     self.rename_graph.emit(self.measure_name_before_rename, new_name)
 

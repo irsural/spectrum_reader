@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>618</width>
-    <height>262</height>
+    <width>878</width>
+    <height>479</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -74,6 +74,17 @@
          <column>
           <property name="text">
            <string>Удалить</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Путь</string>
+          </property>
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
           </property>
          </column>
         </widget>
